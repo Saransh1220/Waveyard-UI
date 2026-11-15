@@ -204,7 +204,6 @@ describe('UploadFormBase (more)', () => {
     c.nextStep();
     expect(c.currentStep()).toBe(3);
     expect(toast.show).toHaveBeenCalledWith('Please enable at least one license option.', 'error');
-    // selectedLicenses is a computed over non-signal form state, so it stays memoized
     c.goToStep(4);
     expect(c.currentStep()).toBe(4);
     c.nextStep(); // submits; cover/preview present, but files not uploaded

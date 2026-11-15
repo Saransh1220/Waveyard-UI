@@ -1,117 +1,119 @@
 <main class="upload-page-container" [formGroup]="uploadForm">
-  <section class="upload-shell">
-    <su-page-head
-      [eyebrow]="isEditMode() ? 'Studio · edit beat' : 'Upload · new beat'"
-      [heading]="isEditMode() ? 'Refine' : 'Press'"
-      [accent]="isEditMode() ? 'your sound.' : 'something new.'"
-      [subtitle]="
-        isEditMode()
-          ? 'Update metadata, adjust licensing tiers and refresh your artwork.'
-          : 'Fill in the details, set your licenses, and drop it into the catalog whenever you\'re ready.'
-      "
-    />
-
+  <div class="upload-shell">
+    <h1>{{ isEditMode() ? 'Edit beat' : 'Upload a beat' }}</h1>
     <div class="upload-layout">
-      <!-- ─────────────── Form ─────────────── -->
       <div class="form-col">
-        <!-- Files -->
-        <su-panel heading="Files" hint="Uploads start as soon as you pick a file" accent="hot">
-          <div class="cover-row">
-            <label
-              class="cover-drop"
-              [class.has-art]="coverFile()"
-              (drop)="onFileDropped($event, 'cover')"
-              (dragover)="onDragOver($event)"
-            >
-              <input
-                type="file"
-                hidden
-                accept="image/jpeg,image/png"
-                (change)="onFileSelected($event, 'cover')"
-              />
-              @if (coverPreviewUrl()) {
-                <img [src]="coverPreviewUrl()" alt="Cover preview" />
-              } @else {
-                <i class="fa-solid fa-image" aria-hidden="true"></i>
-              }
-              <span class="cover-overlay">{{ coverFile() ? 'Replace' : 'Upload' }}</span>
-            </label>
+        <section class="upload-section assets-section" aria-labelledby="upload-files">
+          <h2 id="upload-files" tabindex="-1">Assets</h2>
+          <div class="asset-layout">
+            <div class="cover-group" role="group" aria-label="Cover art">
+              <div class="cover-content">
+                <label
+                  class="cover-drop"
+                  [class.has-art]="coverPreviewUrl()"
+                  [class.drag-active]="activeDropTarget() === 'cover'"
+                  (drop)="onFileDropped($event, 'cover')"
+                  (dragover)="onDragOver($event, 'cover')"
+                  (dragleave)="onDragLeave($event, 'cover')"
+                >
+                  <input
+                    type="file"
+                    class="file-input"
+                    aria-label="Choose cover art"
+                    accept="image/jpeg,image/png"
+                    (change)="onFileSelected($event, 'cover')"
+                  />
+                  @if (coverPreviewUrl()) {
+                    <img [src]="coverPreviewUrl()" alt="Cover preview" />
+                  } @else {
+                    <i class="fa-solid fa-image" aria-hidden="true"></i>
+                  }
+                  <span class="cover-overlay">{{
+                    coverPreviewUrl() ? 'Replace cover' : 'Choose cover'
+                  }}</span>
+                </label>
 
-            <div class="cover-copy">
-              <div class="row-title">
-                <strong>Cover art</strong>
-                <span class="req">Required</span>
+                <div class="cover-copy">
+                  @if (fileSummary('cover'); as summary) {
+                    <p class="cover-filename">{{ summary.name }} · {{ summary.size }}</p>
+                  } @else {
+                    <p class="cover-specs">JPG / PNG · 5 MB max</p>
+                  }
+                  <ng-container *ngTemplateOutlet="transfer; context: { $implicit: 'cover' }" />
+                  @if (coverFile()) {
+                    <button type="button" class="link-btn" (click)="removeFile('cover')">
+                      Remove cover
+                    </button>
+                  }
+                </div>
               </div>
-              <p class="cover-specs">
-                JPG or PNG, up to 5MB. Non-square artwork is cropped from the center, best at
-                1000×1000px. No borders or watermarks.
-              </p>
-              <ng-container *ngTemplateOutlet="transfer; context: { $implicit: 'cover' }" />
-              @if (coverFile()) {
-                <button type="button" class="link-btn" (click)="removeFile('cover')">
-                  Remove cover
-                </button>
+            </div>
+
+            <div class="audio-group" role="group" aria-label="Audio files">
+              @for (row of audioRows; track row.type) {
+                <div
+                  class="file-row"
+                  [class.drag-active]="activeDropTarget() === row.type"
+                  [attr.data-phase]="fileUploadState(row.type).phase"
+                  (drop)="onFileDropped($event, row.type)"
+                  (dragover)="onDragOver($event, row.type)"
+                  (dragleave)="onDragLeave($event, row.type)"
+                >
+                  @let summary = fileSummary(row.type);
+                  <label class="file-picker">
+                    <input
+                      type="file"
+                      class="file-input"
+                      [attr.aria-label]="(summary ? 'Replace ' : 'Choose ') + row.title"
+                      [attr.accept]="row.accept"
+                      (change)="onFileSelected($event, row.type)"
+                    />
+                    <i
+                      class="file-picker-icon fa-solid fa-arrow-up-from-bracket"
+                      aria-hidden="true"
+                    ></i>
+                    <span class="file-main">
+                      <span class="row-title">
+                        <strong>{{ row.title }}</strong>
+                        @if (!isFileRequired(row.type)) {
+                          <span class="optional">Optional</span>
+                        }
+                      </span>
+                      @if (summary) {
+                        <small class="file-name">{{ summary.name }} · {{ summary.size }}</small>
+                      } @else {
+                        <span class="file-picker-hint">
+                          <span class="drop-hint">Drop file or </span
+                          ><span class="browse-label">Browse</span>
+                        </span>
+                      }
+                      <ng-container
+                        *ngTemplateOutlet="transfer; context: { $implicit: row.type }"
+                      />
+                    </span>
+                    @if (summary) {
+                      <span class="file-picker-hint browse-label">Replace</span>
+                    }
+                  </label>
+                  @if (summary) {
+                    <button
+                      type="button"
+                      class="file-remove"
+                      [attr.aria-label]="'Remove ' + row.title"
+                      title="Remove file"
+                      (click)="removeFile(row.type)"
+                    >
+                      <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                    </button>
+                  }
+                </div>
               }
             </div>
           </div>
+        </section>
 
-          <div class="files-divider"><span>Audio</span></div>
-
-          <div class="file-list">
-            @for (row of audioRows; track row.type) {
-              <label
-                class="file-row"
-                [class.filled]="fileSummary(row.type)"
-                [attr.data-phase]="fileUploadState(row.type).phase"
-                (drop)="onFileDropped($event, row.type)"
-                (dragover)="onDragOver($event)"
-              >
-                <input
-                  type="file"
-                  hidden
-                  [attr.accept]="row.accept"
-                  (change)="onFileSelected($event, row.type)"
-                />
-                <span class="file-icon"
-                  ><i class="fa-solid {{ row.icon }}" aria-hidden="true"></i
-                ></span>
-                <span class="file-main">
-                  <span class="row-title">
-                    <strong>{{ row.title }}</strong>
-                    <span class="req" [class.optional]="!isFileRequired(row.type)">{{
-                      isFileRequired(row.type) ? 'Required' : 'Optional'
-                    }}</span>
-                  </span>
-                  @if (fileSummary(row.type); as summary) {
-                    <small class="file-name">{{ summary.name }} · {{ summary.size }}</small>
-                  } @else {
-                    <small>{{ row.hint }}</small>
-                  }
-                  <ng-container *ngTemplateOutlet="transfer; context: { $implicit: row.type }" />
-                </span>
-                <span class="file-actions">
-                  @if (fileSummary(row.type)) {
-                    <button
-                      type="button"
-                      class="link-btn"
-                      (click)="
-                        $event.preventDefault(); $event.stopPropagation(); removeFile(row.type)
-                      "
-                    >
-                      Remove
-                    </button>
-                  }
-                  <span class="pick-btn">{{
-                    fileSummary(row.type) ? 'Replace' : 'Choose file'
-                  }}</span>
-                </span>
-              </label>
-            }
-          </div>
-        </su-panel>
-
-        <!-- Details -->
-        <su-panel heading="Details" hint="How listeners find this beat" accent="hot">
+        <section class="upload-section" aria-labelledby="upload-details">
+          <h2 id="upload-details" tabindex="-1">Track details</h2>
           <div class="fields">
             <label class="field full">
               <span class="label">Track name <b>*</b></span>
@@ -228,6 +230,7 @@
               }
               <input
                 #tagInput
+                aria-label="Add a search tag"
                 placeholder="Add a tag and press enter…"
                 (keydown.enter)="$event.preventDefault(); addTag({ target: tagInput })"
                 [disabled]="tags.length >= 3"
@@ -237,80 +240,101 @@
               <small class="field-error">{{ tagInputError() }}</small>
             }
           </div>
-        </su-panel>
+        </section>
 
-        <!-- Licenses -->
-        <su-panel heading="Licenses" hint="Toggle on or off and set your prices" accent="hot">
+        <section class="upload-section" aria-labelledby="upload-licenses">
+          <h2 id="upload-licenses" tabindex="-1">Licenses and pricing</h2>
           <div class="licenses" formArrayName="licenses">
             @for (license of licenses.controls; track license; let i = $index) {
-              <div class="license" [class.off]="!license.get('enabled')?.value" [formGroupName]="i">
-                <div class="license-top-row">
-                  <button
-                    type="button"
-                    class="switch"
-                    [class.on]="license.get('enabled')?.value"
-                    [attr.aria-pressed]="license.get('enabled')?.value"
-                    aria-label="Enable license"
-                    (click)="license.patchValue({ enabled: !license.get('enabled')?.value })"
-                  ></button>
-                  <div class="lic-info">
-                    <strong>
-                      {{ getReferenceLicenseName(license.get('type')?.value) }}
+              <div class="license" [formGroupName]="i">
+                <button
+                  type="button"
+                  class="switch"
+                  [class.on]="license.get('enabled')?.value"
+                  [attr.aria-pressed]="license.get('enabled')?.value"
+                  [attr.aria-label]="
+                    'Enable ' + getReferenceLicenseName(license.get('type')?.value) + ' license'
+                  "
+                  (click)="license.patchValue({ enabled: !license.get('enabled')?.value })"
+                ></button>
+                <details class="license-details" [open]="i === 0">
+                  <summary class="license-summary">
+                    <span class="lic-info">
+                      <strong>{{ getReferenceLicenseName(license.get('type')?.value) }}</strong>
                       <em>{{ getReferenceLicenseFormat(license.get('type')?.value) }}</em>
-                    </strong>
-                    <small>{{ getReferenceLicenseSub(license.get('type')?.value) }}</small>
-                  </div>
-                </div>
+                    </span>
+                    @if (license.get('enabled')?.value) {
+                      @if (licenseHasPriceError(license)) {
+                        <span class="field-error">Check prices</span>
+                      } @else {
+                        <span class="license-summary-price">
+                          {{ formatCurrency(license.get('price')?.value) }}
+                          @if (
+                            !license.get('sellNativeOnly')?.value &&
+                            license.get('secondaryPrice')?.value
+                          ) {
+                            <span>{{
+                              formatSecondaryCurrency(license.get('secondaryPrice')?.value)
+                            }}</span>
+                          }
+                        </span>
+                      }
+                    }
+                    <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+                  </summary>
+                  <small class="license-description">{{
+                    getReferenceLicenseSub(license.get('type')?.value)
+                  }}</small>
+                  <div class="license-prices-grid">
+                    <div class="price native-price-field">
+                      <app-currency-price-field
+                        [currency]="storeCurrency()"
+                        [value]="license.get('price')?.value"
+                        [label]="'Native Price (' + storeCurrency() + ')'"
+                        [symbol]="nativeCurrencySymbol()"
+                        [isNative]="true"
+                        [disabled]="!license.get('enabled')?.value"
+                        [error]="license.get('nativeError')?.value"
+                        (valueChange)="onNativePriceChange(i, $event)"
+                      />
+                    </div>
 
-                <div class="license-prices-grid">
-                  <div class="price native-price-field">
-                    <app-currency-price-field
-                      [currency]="storeCurrency()"
-                      [value]="license.get('price')?.value"
-                      [label]="'Native Price (' + storeCurrency() + ')'"
-                      [symbol]="nativeCurrencySymbol()"
-                      [isNative]="true"
-                      [disabled]="!license.get('enabled')?.value"
-                      [error]="license.get('nativeError')?.value"
-                      (valueChange)="onNativePriceChange(i, $event)"
-                    />
-                  </div>
+                    <div class="secondary-price-wrapper">
+                      <app-currency-price-field
+                        [currency]="secondaryCurrency()"
+                        [value]="license.get('secondaryPrice')?.value"
+                        [label]="'Secondary Price (' + secondaryCurrency() + ')'"
+                        [symbol]="secondaryCurrencySymbol()"
+                        [isNative]="false"
+                        [disabled]="
+                          !license.get('enabled')?.value || license.get('sellNativeOnly')?.value
+                        "
+                        [error]="license.get('secondaryError')?.value"
+                        [showAutoFill]="!license.get('sellNativeOnly')?.value"
+                        [autoFillLoading]="license.get('autoFillLoading')?.value"
+                        [rateInfo]="license.get('rateInfo')?.value"
+                        [isStale]="license.get('isStale')?.value"
+                        (valueChange)="onSecondaryPriceChange(i, $event)"
+                        (autoFill)="autoFillSecondaryPrice(i)"
+                      />
 
-                  <div class="secondary-price-wrapper">
-                    <app-currency-price-field
-                      [currency]="secondaryCurrency()"
-                      [value]="license.get('secondaryPrice')?.value"
-                      [label]="'Secondary Price (' + secondaryCurrency() + ')'"
-                      [symbol]="secondaryCurrencySymbol()"
-                      [isNative]="false"
-                      [disabled]="
-                        !license.get('enabled')?.value || license.get('sellNativeOnly')?.value
-                      "
-                      [error]="license.get('secondaryError')?.value"
-                      [showAutoFill]="!license.get('sellNativeOnly')?.value"
-                      [autoFillLoading]="license.get('autoFillLoading')?.value"
-                      [rateInfo]="license.get('rateInfo')?.value"
-                      [isStale]="license.get('isStale')?.value"
-                      (valueChange)="onSecondaryPriceChange(i, $event)"
-                      (autoFill)="autoFillSecondaryPrice(i)"
-                    />
-
-                    <div class="native-only-toggle">
-                      <label class="native-only-label">
-                        <input
-                          type="checkbox"
-                          [checked]="license.get('sellNativeOnly')?.value"
-                          [disabled]="!license.get('enabled')?.value"
-                          (change)="onSellNativeOnlyToggle(i, $event)"
-                        />
-                        <span
-                          >Sell only in {{ storeCurrency() }} (disable
-                          {{ secondaryCurrency() }})</span
-                        >
-                      </label>
+                      <div class="native-only-toggle">
+                        <label class="native-only-label">
+                          <input
+                            type="checkbox"
+                            [checked]="license.get('sellNativeOnly')?.value"
+                            [disabled]="!license.get('enabled')?.value"
+                            (change)="onSellNativeOnlyToggle(i, $event)"
+                          />
+                          <span
+                            >Sell only in {{ storeCurrency() }} (disable
+                            {{ secondaryCurrency() }})</span
+                          >
+                        </label>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </details>
               </div>
             }
           </div>
@@ -318,10 +342,7 @@
           <div class="free-row">
             <div>
               <strong>Free MP3 download <em>non-commercial</em></strong>
-              <small
-                >Listeners can grab a tagged MP3 with no commercial license. It gives away reach,
-                not rights.</small
-              >
+              <small>Let listeners download a tagged MP3 for personal use.</small>
             </div>
             <button
               type="button"
@@ -332,143 +353,160 @@
               (click)="f['freeMp3Enabled'].setValue(!f['freeMp3Enabled'].value)"
             ></button>
           </div>
-        </su-panel>
+        </section>
+
+        <footer class="upload-footer">
+          <p aria-live="polite">
+            @if (isEditMode()) {
+              Editing {{ f['title'].value || 'beat' }}
+            } @else if (allRequiredFilesUploaded()) {
+              <i class="fa-solid fa-circle-check" aria-hidden="true"></i> Files uploaded
+            } @else {
+              Waiting for required files
+            }
+          </p>
+          <div class="upload-actions">
+            <button
+              type="button"
+              class="act ghost"
+              (click)="isEditMode() ? cancelEdit() : saveDraft()"
+            >
+              {{ isEditMode() ? 'Cancel' : 'Save draft' }}
+            </button>
+            <button
+              type="button"
+              class="act primary"
+              (click)="publishForm()"
+              [disabled]="
+                isSubmitting() ||
+                (isEditMode()
+                  ? isLoadingSpec() || uploadForm.invalid || selectedLicenses().length === 0
+                  : !pendingCompletionId() && !allRequiredFilesUploaded())
+              "
+            >
+              {{
+                isSubmitting()
+                  ? isEditMode()
+                    ? 'Saving changes…'
+                    : pendingCompletionId()
+                      ? 'Retrying finalization…'
+                      : 'Publishing…'
+                  : isEditMode()
+                    ? 'Save changes'
+                    : pendingCompletionId()
+                      ? 'Retry finalization'
+                      : 'Publish beat'
+              }}
+              <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+            </button>
+          </div>
+        </footer>
       </div>
 
-      <!-- ─────────────── Preview + checklist ─────────────── -->
-      <aside class="side-col">
-        <su-panel heading="Live preview" hint="Draft">
+      <aside class="side-col" aria-labelledby="upload-preview-heading">
+        <h2 id="upload-preview-heading">Live preview</h2>
+        <div class="preview-main">
           <div class="preview-art">
             @if (coverPreviewUrl()) {
               <img [src]="coverPreviewUrl()" alt="Cover preview" />
             } @else {
-              <i class="fa-solid fa-image" aria-hidden="true"></i>
+              <i class="fa-solid fa-music" aria-hidden="true"></i>
             }
           </div>
-          <h2 class="preview-title">{{ f['title'].value || 'Untitled beat' }}</h2>
-          <p class="preview-meta">
-            {{ f['bpm'].value || '—' }} BPM · {{ f['key'].value || '—' }} ·
-            {{ f['genre'].value || '—' }}
-          </p>
-          <div class="preview-tags">
-            @for (tag of beatPreviewTags(); track tag) {
-              <span>{{ tag }}</span>
-            } @empty {
-              <small>No tags yet</small>
-            }
-          </div>
-          @if (selectedLicenses().length) {
-            <ul class="preview-licenses">
-              @for (license of selectedLicenses(); track license) {
-                <li>
-                  <span>{{ getReferenceLicenseName(license.get('type')?.value) }}</span>
-                  <b>
-                    {{ formatCurrency(license.get('price')?.value) }}
-                    @if (
-                      !license.get('sellNativeOnly')?.value && license.get('secondaryPrice')?.value
-                    ) {
-                      / {{ formatSecondaryCurrency(license.get('secondaryPrice')?.value) }}
-                    }
-                  </b>
-                </li>
+          <div class="preview-copy">
+            <h3 class="preview-title">{{ f['title'].value || 'Untitled beat' }}</h3>
+            <p class="preview-meta">
+              {{ f['bpm'].value || '—' }} BPM · {{ f['key'].value || '—' }} ·
+              {{ f['genre'].value || '—' }}
+            </p>
+            <div class="preview-tags">
+              @for (tag of beatPreviewTags(); track tag) {
+                <span>{{ tag }}</span>
               }
-            </ul>
-          }
-        </su-panel>
-
-        <su-panel
-          heading="Ready to publish?"
-          [hint]="isEditMode() ? 'Update checklist' : 'Checklist'"
-        >
-          <ul class="checklist">
-            <li [class.ok]="isEditMode() || requiredAudioCount() === requiredAudioTotal()">
-              <i aria-hidden="true"></i>
+            </div>
+          </div>
+        </div>
+        @if (selectedLicenses().length) {
+          <ul class="preview-licenses">
+            @for (license of selectedLicenses(); track license) {
+              <li>
+                <span>{{ getReferenceLicenseName(license.get('type')?.value) }}</span>
+                <b>
+                  {{ formatCurrency(license.get('price')?.value) }}
+                  @if (
+                    !license.get('sellNativeOnly')?.value && license.get('secondaryPrice')?.value
+                  ) {
+                    / {{ formatSecondaryCurrency(license.get('secondaryPrice')?.value) }}
+                  }
+                </b>
+              </li>
+            }
+          </ul>
+        }
+        <h3 class="checklist-heading">Publish checklist</h3>
+        <ul class="checklist">
+          <li [class.ok]="fileUploadState('cover').phase === 'uploaded'">
+            <button type="button" (click)="focusSection('upload-files')">
+              <span class="check-icon" aria-hidden="true"></span>
+              <span>Cover art</span>
+              <b>{{ coverFile() || coverPreviewUrl() ? fileUploadLabel('cover') : 'Missing' }}</b>
+            </button>
+          </li>
+          <li [class.ok]="isEditMode() || uploadedAudioCount() === requiredAudioTotal()">
+            <button type="button" (click)="focusSection('upload-files')">
+              <span class="check-icon" aria-hidden="true"></span>
               <span>Required audio</span>
               <b>{{
-                isEditMode() ? 'Current files' : requiredAudioCount() + ' / ' + requiredAudioTotal()
+                isEditMode()
+                  ? 'Current files'
+                  : uploadedAudioCount() + ' / ' + requiredAudioTotal() + ' uploaded'
               }}</b>
-            </li>
-            <li [class.ok]="fileUploadState('cover').phase === 'uploaded' || !!coverPreviewUrl()">
-              <i aria-hidden="true"></i>
-              <span>Cover art</span>
-              <b>{{
-                fileUploadState('cover').phase === 'uploaded' || coverPreviewUrl()
-                  ? 'Uploaded'
-                  : coverFile()
-                    ? fileUploadLabel('cover')
-                    : 'Missing'
-              }}</b>
-            </li>
-            <li [class.ok]="f['title'].valid && f['genre'].valid">
-              <i aria-hidden="true"></i>
-              <span>Details</span>
-              <b>{{ f['title'].valid && f['genre'].valid ? 'Ready' : 'Incomplete' }}</b>
-            </li>
-            <li [class.ok]="selectedLicenses().length > 0">
-              <i aria-hidden="true"></i>
+            </button>
+          </li>
+          <li [class.ok]="detailsReady">
+            <button type="button" (click)="focusSection('upload-details')">
+              <span class="check-icon" aria-hidden="true"></span>
+              <span>Track details</span>
+              <b>{{ detailsReady ? 'Ready' : 'Incomplete' }}</b>
+            </button>
+          </li>
+          <li [class.ok]="selectedLicenses().length > 0 && !hasLicenseErrors">
+            <button type="button" (click)="focusSection('upload-licenses')">
+              <span class="check-icon" aria-hidden="true"></span>
               <span>Active licenses</span>
-              <b>{{ selectedLicenses().length }}</b>
-            </li>
-          </ul>
-        </su-panel>
+              <b>{{ hasLicenseErrors ? 'Check prices' : selectedLicenses().length }}</b>
+            </button>
+          </li>
+        </ul>
       </aside>
     </div>
-  </section>
+  </div>
 
-  <footer class="sticky-footer">
-    <p>
-      @if (isEditMode()) {
-        Editing <em>{{ uploadForm.get('title')?.value || 'beat' }}</em
-        >. Save changes to update metadata and pricing.
-      } @else if (allRequiredFilesUploaded()) {
-        Files <em>uploaded</em>. Publish only finalizes metadata and starts processing.
-      } @else {
-        Files upload <em>as soon as you select them</em>. You can keep filling out the form.
-      }
-    </p>
-    <div>
-      <button type="button" class="act ghost" (click)="isEditMode() ? cancelEdit() : saveDraft()">
-        {{ isEditMode() ? 'Cancel' : 'Save draft' }}
-      </button>
-      <button
-        type="button"
-        class="act primary"
-        (click)="isEditMode() ? saveEditedSpec() : submitUpload()"
-        [disabled]="
-          isSubmitting() ||
-          (isEditMode()
-            ? uploadForm.invalid || selectedLicenses().length === 0
-            : !pendingCompletionId() && !allRequiredFilesUploaded())
-        "
-      >
-        {{
-          isSubmitting()
-            ? isEditMode()
-              ? 'Saving changes…'
-              : pendingCompletionId()
-                ? 'Retrying finalization…'
-                : 'Publishing…'
-            : isEditMode()
-              ? 'Save changes →'
-              : pendingCompletionId()
-                ? 'Retry finalization →'
-                : 'Publish beat →'
-        }}
-      </button>
-    </div>
-  </footer>
-
-  <!-- Shared upload-progress readout for a file slot -->
   <ng-template #transfer let-type>
     @if (fileUploadState(type).phase !== 'idle') {
       <span class="transfer" [attr.data-phase]="fileUploadState(type).phase">
-        <span class="transfer-top">
-          <span><i></i>{{ fileUploadLabel(type) }}</span>
-          @if (fileUploadState(type).phase === 'uploading') {
-            <b>{{ fileUploadState(type).progress }}%</b>
-          }
+        <span
+          class="transfer-label"
+          [attr.role]="fileUploadState(type).phase === 'uploading' ? null : 'status'"
+        >
+          <i
+            class="fa-solid"
+            [class.fa-circle-exclamation]="fileUploadState(type).phase === 'error'"
+            [class.fa-circle-check]="fileUploadState(type).phase === 'uploaded'"
+            [class.fa-circle-notch]="
+              fileUploadState(type).phase !== 'error' && fileUploadState(type).phase !== 'uploaded'
+            "
+            aria-hidden="true"
+          ></i>
+          {{ fileUploadLabel(type) }}
         </span>
-        <span class="transfer-track"><i [style.width.%]="fileUploadState(type).progress"></i></span>
+        @if (fileUploadState(type).phase === 'uploading') {
+          <progress
+            [value]="fileUploadState(type).progress"
+            max="100"
+            aria-label="File upload progress"
+          ></progress>
+        }
       </span>
     }
   </ng-template>

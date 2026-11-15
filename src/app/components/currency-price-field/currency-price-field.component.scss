@@ -33,7 +33,7 @@
   background: transparent;
   color: var(--brand-color);
   border: 1px solid var(--brand-color);
-  border-radius: 2px;
+  border-radius: var(--currency-price-radius, 2px);
 }
 
 .autofill-btn {
@@ -46,7 +46,7 @@
   font-size: 0.75rem;
   font-weight: 500;
   padding: 3px 8px;
-  border-radius: 2px;
+  border-radius: var(--currency-price-radius, 2px);
   cursor: pointer;
   transition: all 0.15s ease;
 
@@ -66,7 +66,7 @@
   align-items: center;
   background: var(--bg-color);
   border: 1px solid var(--line-color);
-  border-radius: 2px;
+  border-radius: var(--currency-price-radius, 2px);
   padding: 0 10px;
   height: 38px;
   transition: border-color 0.15s ease;

@@ -2,18 +2,11 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { CurrencyPriceFieldComponent } from '../../../components/currency-price-field/currency-price-field.component';
-import { UploadFormBase } from '../../../pages/upload/upload-form.base';
-import { SuPageHeadComponent, SuPanelComponent } from '../ui';
+import { UploadFormBase } from '../../upload/upload-form.base';
 
 @Component({
   selector: 'app-studio-upload',
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    SuPageHeadComponent,
-    SuPanelComponent,
-    CurrencyPriceFieldComponent,
-  ],
+  imports: [CommonModule, ReactiveFormsModule, CurrencyPriceFieldComponent],
   templateUrl: '../../../pages/upload/upload.component.html',
   styleUrls: ['../../../pages/upload/upload.component.scss'],
   styles: [
@@ -22,15 +15,13 @@ import { SuPageHeadComponent, SuPanelComponent } from '../ui';
         display: block;
         width: 100%;
       }
-      /* Inside the studio the shell already provides the page padding and background. */
       .upload-page-container {
-        min-height: auto !important;
-        padding: 0 0 140px !important;
-        background: transparent !important;
+        min-height: auto;
+        padding: 0;
+        background: transparent;
       }
       .upload-shell {
-        max-width: none !important;
-        padding: 0 !important;
+        padding: 0;
       }
     `,
   ],

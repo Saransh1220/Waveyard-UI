@@ -1,13 +1,17 @@
 import {
+  afterNextRender,
   ChangeDetectorRef,
   computed,
   Directive,
+  ElementRef,
   inject,
+  Injector,
   OnDestroy,
   OnInit,
   signal,
 } from '@angular/core';
-import { FormArray, FormBuilder, Validators } from '@angular/forms';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { AbstractControl, FormArray, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom, Subscription } from 'rxjs';
 import { GetSpecRequest, SpecDto } from '../../core/api/spec.requests';
@@ -60,6 +64,8 @@ const INITIAL_FILE_UPLOAD_STATE: FileUploadState = {
 @Directive()
 export abstract class UploadFormBase implements OnInit, OnDestroy {
   private readonly changeDetector = inject(ChangeDetectorRef);
+  private readonly injector = inject(Injector);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef, { optional: true });
   protected labService = inject(LabService);
   protected specUploadService = inject(SpecUploadService);
   protected specUploadMonitor = inject(SpecUploadMonitorService);
@@ -178,16 +184,6 @@ export abstract class UploadFormBase implements OnInit, OnDestroy {
   readonly keyRoots = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
   readonly genres = signal<string[]>(Object.values(Genre));
 
-  readonly selectedLicenses = computed(() =>
-    this.licenses.controls.filter((license) => !!license.get('enabled')?.value),
-  );
-
-  readonly minimumEnabledPrice = computed(() => {
-    const enabled = this.selectedLicenses();
-    if (!enabled.length) return 0;
-    return Math.min(...enabled.map((license) => Number(license.get('price')?.value || 0)));
-  });
-
   readonly beatPreviewTags = computed(() => {
     const tags = [...this.selectedMoods()];
     if (this.stemsFile()) {
@@ -229,11 +225,71 @@ export abstract class UploadFormBase implements OnInit, OnDestroy {
     return this.uploadForm.controls;
   }
 
+  private readonly formValueChanges = toSignal(this.uploadForm.valueChanges);
+
+  readonly selectedLicenses = computed(() => {
+    this.formValueChanges();
+    return this.licenses.controls.filter((license) => !!license.get('enabled')?.value);
+  });
+
+  readonly minimumEnabledPrice = computed(() => {
+    const enabled = this.selectedLicenses();
+    if (!enabled.length) return 0;
+    return Math.min(...enabled.map((license) => Number(license.get('price')?.value || 0)));
+  });
+
+  get detailsReady() {
+    return this.f.title.valid && this.f.genre.valid && this.f.bpm.valid && this.f.description.valid;
+  }
+
+  get hasLicenseErrors() {
+    return this.selectedLicenses().some((license) => this.licenseHasPriceError(license));
+  }
+
+  licenseHasPriceError(license: AbstractControl): boolean {
+    return Boolean(
+      license.get('nativeError')?.value ||
+      (!license.get('sellNativeOnly')?.value && license.get('secondaryError')?.value),
+    );
+  }
+
+  uploadedAudioCount() {
+    return this.audioRows.filter(
+      ({ type }) => this.isFileRequired(type) && this.fileUploadState(type).phase === 'uploaded',
+    ).length;
+  }
+
+  focusSection(id: string) {
+    afterNextRender(
+      () => {
+        const heading = this.host?.nativeElement.querySelector<HTMLHeadingElement>(`#${id}`);
+        heading?.focus({ preventScroll: true });
+        heading?.scrollIntoView?.({ block: 'start' });
+      },
+      { injector: this.injector },
+    );
+  }
+
+  publishForm() {
+    if (this.isEditMode()) {
+      this.saveEditedSpec();
+    } else {
+      this.submitUpload();
+    }
+    if (!this.isSubmitting() && !this.pendingCompletionId()) {
+      if (!this.detailsReady) this.focusSection('upload-details');
+      else if (!this.selectedLicenses().length || this.hasLicenseErrors)
+        this.focusSection('upload-licenses');
+    }
+  }
+
   fieldError(field: 'title' | 'genre' | 'bpm' | 'description') {
     const control = this.uploadForm.get(field);
     if (!control?.invalid || !(control.touched || control.dirty)) return null;
-    if (control.hasError('required'))
-      return `${field === 'title' ? 'Track name' : 'Genre'} is required.`;
+    if (control.hasError('required')) {
+      const label = { title: 'Track name', genre: 'Genre', bpm: 'BPM', description: 'Description' };
+      return `${label[field]} is required.`;
+    }
     if (control.hasError('maxlength'))
       return `${field === 'description' ? 'Description' : 'Track name'} is too long.`;
     if (control.hasError('min') || control.hasError('max'))
@@ -766,17 +822,34 @@ export abstract class UploadFormBase implements OnInit, OnDestroy {
     if (file) void this.handleFile(file, type);
   }
 
+  readonly activeDropTarget = signal<UploadFileType | null>(null);
+
   onFileDropped(event: DragEvent, type: UploadFileType) {
     event.preventDefault();
     event.stopPropagation();
+    this.activeDropTarget.set(null);
     if (event.dataTransfer?.files && event.dataTransfer.files.length > 0) {
       void this.handleFile(event.dataTransfer.files[0], type);
     }
   }
 
-  onDragOver(event: DragEvent) {
+  onDragOver(event: DragEvent, type?: UploadFileType) {
     event.preventDefault();
     event.stopPropagation();
+    if (type && event.dataTransfer?.types.includes('Files')) {
+      event.dataTransfer.dropEffect = 'copy';
+      this.activeDropTarget.set(type);
+    }
+  }
+
+  onDragLeave(event: DragEvent, type: UploadFileType) {
+    if (
+      event.relatedTarget instanceof Node &&
+      (event.currentTarget as HTMLElement).contains(event.relatedTarget)
+    ) {
+      return;
+    }
+    if (this.activeDropTarget() === type) this.activeDropTarget.set(null);
   }
 
   removeFile(type: UploadFileType) {
@@ -1110,30 +1183,22 @@ export abstract class UploadFormBase implements OnInit, OnDestroy {
   /** The three audio inputs, rendered from data so every row shares one layout. */
   readonly audioRows: ReadonlyArray<{
     type: 'preview' | 'wav' | 'stems';
-    icon: string;
     title: string;
-    hint: string;
     accept: string;
   }> = [
     {
       type: 'preview',
-      icon: 'fa-music',
       title: 'MP3 preview',
-      hint: 'Tagged stream file used on the beat page player.',
       accept: 'audio/mpeg,.mp3',
     },
     {
       type: 'wav',
-      icon: 'fa-wave-square',
       title: 'Untagged WAV',
-      hint: 'Clean master delivered to buyers with eligible licenses.',
       accept: 'audio/wav,.wav',
     },
     {
       type: 'stems',
-      icon: 'fa-layer-group',
       title: 'Stems (.zip or .rar)',
-      hint: 'Individual trackouts for unlimited licenses.',
       accept: '.zip,.rar,application/zip,application/vnd.rar,application/x-rar-compressed',
     },
   ];

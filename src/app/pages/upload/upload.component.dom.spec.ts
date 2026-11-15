@@ -53,20 +53,27 @@ describe('UploadComponent (rendered layout)', () => {
     el = fixture.nativeElement as HTMLElement;
   });
 
-  it('renders the page heading and the three form panels plus preview and checklist', () => {
-    expect(el.querySelector('su-page-head h1')?.textContent).toContain('Press');
-    const headings = Array.from(el.querySelectorAll('su-panel .panel-head h2')).map((h) =>
-      h.textContent?.trim(),
-    );
-    expect(headings).toEqual(['Files', 'Details', 'Licenses', 'Live preview', 'Ready to publish?']);
+  it('renders the form sections together with the live preview and checklist', () => {
+    expect(el.querySelector('h1')?.textContent).toContain('Upload a beat');
+    expect(
+      Array.from(el.querySelectorAll('.upload-section h2'), (heading) =>
+        heading.textContent?.trim(),
+      ),
+    ).toEqual(['Assets', 'Track details', 'Licenses and pricing']);
+    expect(el.querySelector('aside h2')?.textContent).toContain('Live preview');
+    expect(el.querySelector('.checklist li button')).toBeTruthy();
   });
 
   it('lists the three audio files, all required for a beat', () => {
-    const rows = el.querySelectorAll('.file-row');
+    const rows = el.querySelectorAll('.audio-group .file-row');
     expect(rows.length).toBe(3);
-    const pills = Array.from(rows).map((row) => row.querySelector('.req')?.textContent?.trim());
-    expect(pills).toEqual(['Required', 'Required', 'Required']);
-    expect(el.querySelectorAll('.file-row .pick-btn')[0].textContent).toContain('Choose file');
+    const pills = Array.from(rows).map((row) =>
+      row.querySelector('.optional')?.textContent?.trim(),
+    );
+    expect(pills).toEqual([undefined, undefined, undefined]);
+    expect(rows[0].querySelector('label input')?.getAttribute('aria-label')).toBe(
+      'Choose MP3 preview',
+    );
   });
 
   it('marks WAV and stems optional when the upload is not a beat', () => {
@@ -75,9 +82,9 @@ describe('UploadComponent (rendered layout)', () => {
     sample.componentInstance.uploadForm.patchValue({ category: 'sample' });
     sample.detectChanges();
     const pills = Array.from(
-      (sample.nativeElement as HTMLElement).querySelectorAll('.file-row .req'),
+      (sample.nativeElement as HTMLElement).querySelectorAll('.file-row .optional'),
     ).map((p) => p.textContent?.trim());
-    expect(pills).toEqual(['Required', 'Optional', 'Optional']);
+    expect(pills).toEqual(['Optional', 'Optional']);
     expect(sample.componentInstance.isFileRequired('wav')).toBe(false);
     expect(sample.componentInstance.isFileRequired('preview')).toBe(true);
   });
@@ -90,13 +97,15 @@ describe('UploadComponent (rendered layout)', () => {
     expect(component.fileSummary('preview')).toEqual({ name: 'beat.mp3', size: '1 MB' });
     const row = el.querySelector('.file-row') as HTMLElement;
     expect(row.querySelector('.file-name')?.textContent).toContain('beat.mp3 · 1 MB');
-    expect(row.querySelector('.pick-btn')?.textContent).toContain('Replace');
+    expect(row.querySelector('label input')?.getAttribute('aria-label')).toBe(
+      'Replace MP3 preview',
+    );
 
-    (row.querySelector('.link-btn') as HTMLButtonElement).click();
+    (row.querySelector('.file-remove') as HTMLButtonElement).click();
     fixture.detectChanges();
     expect(component.previewFile()).toBeNull();
     expect(component.fileSummary('preview')).toBeNull();
-    expect(el.querySelector('.file-row .link-btn')).toBeNull();
+    expect(el.querySelector('.file-row .file-remove')).toBeNull();
   });
 
   it('shows upload progress for a file slot', () => {
@@ -108,6 +117,30 @@ describe('UploadComponent (rendered layout)', () => {
     const transfer = el.querySelectorAll('.file-row')[1].querySelector('.transfer') as HTMLElement;
     expect(transfer.textContent).toContain('Uploading 42%');
     expect(transfer.getAttribute('data-phase')).toBe('uploading');
+  });
+
+  it('highlights the stems drop zone and accepts a dropped archive', () => {
+    const zone = el.querySelectorAll('.file-row')[2];
+    const file = new File(['stems'], 'trackouts.zip', { type: 'application/zip' });
+    const dataTransfer = { types: ['Files'], files: [file], dropEffect: 'none' };
+    const dispatchDrag = (name: string) => {
+      const event = new Event(name, { bubbles: true, cancelable: true });
+      Object.defineProperty(event, 'dataTransfer', { value: dataTransfer });
+      zone.dispatchEvent(event);
+      fixture.detectChanges();
+      return event;
+    };
+
+    expect(dispatchDrag('dragover').defaultPrevented).toBe(true);
+    expect(dataTransfer.dropEffect).toBe('copy');
+    expect(zone.classList.contains('drag-active')).toBe(true);
+    dispatchDrag('dragleave');
+    expect(zone.classList.contains('drag-active')).toBe(false);
+    dispatchDrag('dragover');
+    expect(dispatchDrag('drop').defaultPrevented).toBe(true);
+    expect(zone.classList.contains('drag-active')).toBe(false);
+    expect(component.stemsFile()).toBe(file);
+    expect(zone.querySelector('.file-name')?.textContent).toContain(file.name);
   });
 
   it('shows the cover preview and a remove action once cover art is chosen', () => {
@@ -145,12 +178,31 @@ describe('UploadComponent (rendered layout)', () => {
 
     const firstSwitch = el.querySelector('.license .switch') as HTMLButtonElement;
     const enabled = component.licenses.at(0).get('enabled')?.value;
+    const previewCount = el.querySelectorAll('.preview-licenses li').length;
     const priceInput = el.querySelector('.license .price input') as HTMLInputElement;
     expect(priceInput.disabled).toBe(!enabled);
     firstSwitch.click();
     fixture.detectChanges();
     expect(component.licenses.at(0).get('enabled')?.value).toBe(!enabled);
     expect(priceInput.disabled).toBe(!!enabled);
+    expect(el.querySelectorAll('.preview-licenses li')).toHaveLength(
+      previewCount + (enabled ? -1 : 1),
+    );
+  });
+
+  it('keeps a tier price and validation feedback visible when its editor is collapsed', () => {
+    const tiers = el.querySelectorAll<HTMLDetailsElement>('.license-details');
+    expect(Array.from(tiers, (tier) => tier.open)).toEqual([true, false, false, false]);
+
+    const basic = component.licenses.at(0);
+    basic.patchValue({ price: '28.50' });
+    tiers[0].open = false;
+    fixture.detectChanges();
+    expect(tiers[0].querySelector('summary')?.textContent).toContain('28.50');
+
+    basic.patchValue({ nativeError: 'Enter a valid price.' });
+    fixture.detectChanges();
+    expect(tiers[0].querySelector('summary')?.textContent).toContain('Check prices');
   });
 
   it('toggles the free MP3 download switch', () => {
@@ -180,15 +232,18 @@ describe('UploadComponent (rendered layout)', () => {
     markRequiredFilesUploaded();
     component.uploadForm.patchValue({ title: 'Violet Hour', genre: 'Trap' });
     fixture.detectChanges();
+    expect(items().filter((li) => li.classList.contains('ok')).length).toBe(3);
+    expect(items()[1].textContent).toContain('3 / 3 uploaded');
+    component.f.bpm.setValue(140 as never);
+    fixture.detectChanges();
     expect(items().every((li) => li.classList.contains('ok'))).toBe(true);
-    expect(items()[0].textContent).toContain('3 / 3');
   });
 
   it('only enables Publish once the required files are uploaded, and publishes on click', () => {
     const publish = el.querySelector('.act.primary') as HTMLButtonElement;
     expect(publish.disabled).toBe(true);
-    expect(el.querySelector('.sticky-footer p')?.textContent).toContain(
-      'as soon as you select them',
+    expect(el.querySelector('.upload-footer p')?.textContent).toContain(
+      'Waiting for required files',
     );
 
     markRequiredFilesUploaded();
@@ -197,12 +252,23 @@ describe('UploadComponent (rendered layout)', () => {
     fixture.detectChanges();
     expect(publish.disabled).toBe(false);
     expect(publish.textContent).toContain('Publish beat');
-    expect(el.querySelector('.sticky-footer p')?.textContent).toContain('uploaded');
+    expect(el.querySelector('.upload-footer p')?.textContent).toContain('uploaded');
 
     publish.click();
     (el.querySelector('.act.ghost') as HTMLButtonElement).click();
     expect(submit).toHaveBeenCalledTimes(1);
     expect(save).toHaveBeenCalledTimes(1);
+  });
+
+  it('focuses invalid track details when publishing', () => {
+    markRequiredFilesUploaded();
+    fixture.detectChanges();
+    el.querySelector<HTMLButtonElement>('.act.primary')!.click();
+    fixture.detectChanges();
+    expect(document.activeElement?.id).toBe('upload-details');
+    expect(el.querySelector('[aria-labelledby="upload-details"]')?.textContent).toContain(
+      'BPM is required.',
+    );
   });
 
   it('exposes the audio row definitions used by the template', () => {
