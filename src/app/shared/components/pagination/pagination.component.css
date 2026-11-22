@@ -1,0 +1,194 @@
+:host {
+  display: block;
+  container: pagination / inline-size;
+  min-inline-size: 0;
+}
+
+/* Adapts the separate summary and navigation layout from shadcn/ui on 21st.dev. */
+.pagination-container {
+  --pg-text: var(--ink);
+  --pg-muted: color-mix(in srgb, var(--pg-text) 65%, var(--cream));
+  --pg-line: color-mix(in srgb, var(--pg-text) 14%, transparent);
+  --pg-hover: var(--cream-2);
+  --pg-active: var(--cream-2);
+  --pg-focus: var(--hot);
+
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 1.15rem;
+  padding: 0.8rem 0.15rem 0.1rem;
+  margin-block-start: 0.8rem;
+  border-block-start: 1px solid var(--pg-line);
+  color: var(--pg-text);
+  font:
+    500 0.8rem / 1.3 'Bricolage Grotesque',
+    sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+.pagination-container[hidden] {
+  display: none;
+}
+
+.pagination-container.admin {
+  --pg-text: var(--text, var(--ink));
+  --pg-muted: var(--text-2, var(--ink-mute));
+  --pg-line: var(--line, #ffffff24);
+  --pg-hover: var(--surface-3, var(--cream-2));
+  --pg-active: var(--surface-2, var(--cream-2));
+  --pg-focus: var(--accent, var(--hot));
+
+  margin: 0;
+  padding: 0.7rem 1rem;
+}
+
+.pagination-info,
+.page-position {
+  margin: 0;
+  color: var(--pg-muted);
+}
+
+:is(.pagination-info, .page-position) strong {
+  color: var(--pg-text);
+  font-weight: 600;
+}
+
+.pagination-controls,
+.pages,
+.pagination-perpage {
+  display: flex;
+  align-items: center;
+}
+
+.pagination-controls {
+  gap: 0.32rem;
+  margin-inline-start: auto;
+}
+
+.pages {
+  gap: 2px;
+}
+
+.pager-btn,
+.page-btn,
+select {
+  box-sizing: border-box;
+  min-block-size: 32px;
+  min-inline-size: 32px;
+  padding-inline: 0.42rem;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--pg-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.pager-btn,
+.page-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pager-btn {
+  gap: 0.4rem;
+  padding-inline: 0.55rem;
+}
+
+.pager-btn i,
+.page-size i {
+  color: var(--pg-muted);
+  font-size: 0.66rem;
+}
+
+:is(.pager-btn, .page-btn, select):hover:not(:disabled) {
+  background: var(--pg-hover);
+}
+
+.page-btn[aria-current='page'] {
+  background: var(--pg-active);
+  border-color: var(--pg-line);
+  font-weight: 650;
+}
+
+:is(.pager-btn, .page-btn, select):focus-visible {
+  outline: 2px solid var(--pg-focus);
+  outline-offset: 2px;
+}
+
+.pager-btn:disabled {
+  opacity: 0.42;
+  cursor: default;
+}
+
+.ellipsis {
+  padding-inline: 0.3rem;
+  color: var(--pg-muted);
+}
+
+.page-position {
+  display: none;
+}
+
+.pagination-perpage {
+  gap: 0.4rem;
+  color: var(--pg-muted);
+}
+
+.pagination-container:not(:has(.pagination-controls)) .pagination-perpage {
+  margin-inline-start: auto;
+}
+
+.page-size {
+  position: relative;
+}
+
+select {
+  appearance: none;
+  border-color: var(--pg-line);
+  padding-inline: 0.5rem 1.45rem;
+}
+
+.page-size i {
+  position: absolute;
+  inset-inline-end: 0.55rem;
+  inset-block-start: 50%;
+  translate: 0 -50%;
+  pointer-events: none;
+}
+
+@container pagination (max-width: 510px) {
+  .pagination-controls {
+    flex-basis: 100%;
+    justify-content: center;
+  }
+
+  .pager-btn {
+    padding-inline: 0.3rem;
+  }
+}
+
+@container pagination (max-width: 395px) {
+  .pagination-controls {
+    justify-content: space-between;
+  }
+
+  .pages {
+    display: none;
+  }
+
+  .page-position {
+    display: block;
+  }
+}
+
+@media (pointer: coarse) {
+  .pager-btn,
+  .page-btn,
+  select {
+    min-block-size: 36px;
+    min-inline-size: 36px;
+  }
+}

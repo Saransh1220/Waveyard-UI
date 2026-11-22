@@ -65,6 +65,12 @@
         <app-purchased-files [licenseId]="license.id" />
       }
       <section class="receipt-main" aria-label="Order details">
+        @if (couponSavings(); as savings) {
+          <div class="order-reference">
+            <span class="receipt-label">Coupon savings</span>
+            <span>{{ savings }}</span>
+          </div>
+        }
         @if (state() === 'paid' && orderStatus()?.license?.license_key; as key) {
           <div class="license">
             <div class="license-details">

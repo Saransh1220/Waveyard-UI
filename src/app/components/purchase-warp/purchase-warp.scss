@@ -205,6 +205,7 @@ $font: 'Bricolage Grotesque', sans-serif;
     'sub sub'
     'feats feats';
   align-items: center;
+  grid-template-rows: auto auto auto 1fr;
   row-gap: 8px;
   padding: 24px 24px 22px;
   border: 1px solid $line;
@@ -294,9 +295,23 @@ $font: 'Bricolage Grotesque', sans-serif;
 
 .pw-lic-price {
   grid-area: price;
-  font-size: 32px;
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+  min-block-size: 4.15rem;
+  align-content: start;
+  font-size: clamp(20px, 2.1vw, 29px);
   font-weight: 700;
   letter-spacing: -0.03em;
+}
+
+.pw-lic-offer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+  color: $muted;
+  font-size: 11px;
 }
 
 .pw-lic-sub {
@@ -310,6 +325,7 @@ $font: 'Bricolage Grotesque', sans-serif;
   grid-area: feats;
   flex-direction: column;
   gap: 9px;
+  align-self: start;
   margin: 12px 0 0;
   padding: 16px 0 0;
   border-top: 1px solid $line;
@@ -332,13 +348,32 @@ $font: 'Bricolage Grotesque', sans-serif;
 
 // ── Footer: always in view ──
 .pw-foot {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   flex: none;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
   padding: 22px 8px 12px;
   border-top: 1px solid $line;
+}
+
+.pw-previous {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 10px 14px;
+  border-inline-start: 2px solid $pink;
+  background: rgba($text, 0.08);
+  font-size: 13px;
+
+  p {
+    margin: 2px 0 0;
+    color: $muted;
+  }
 }
 
 .pw-sel {
@@ -368,7 +403,23 @@ $font: 'Bricolage Grotesque', sans-serif;
   font-size: 24px;
   font-weight: 700;
   letter-spacing: -0.02em;
-  white-space: nowrap;
+}
+
+.pw-quote-details {
+  display: grid;
+  gap: 3px;
+  margin-top: 4px;
+  color: $muted;
+  font-size: 12px;
+}
+
+.pw-quote-retry {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .pw-actions {
@@ -515,6 +566,7 @@ $font: 'Bricolage Grotesque', sans-serif;
   }
 
   .pw-lic {
+    grid-template-rows: auto auto auto;
     grid-template-columns: 24px minmax(0, 1fr) auto;
     grid-template-areas:
       'tick name price'
@@ -550,7 +602,11 @@ $font: 'Bricolage Grotesque', sans-serif;
 
   .pw-lic-price {
     align-self: center;
-    font-size: 21px;
+    justify-items: end;
+    min-block-size: 0;
+    font-size: clamp(16px, 4.6vw, 20px);
+    --offer-amount-direction: column;
+    --offer-justify: end;
   }
 
   .pw-lic-sub {
@@ -572,7 +628,7 @@ $font: 'Bricolage Grotesque', sans-serif;
   }
 
   .pw-foot {
-    flex-direction: column;
+    grid-template-columns: minmax(0, 1fr);
     align-items: stretch;
     gap: 14px;
     padding: 14px 8px 8px;
@@ -611,6 +667,7 @@ $font: 'Bricolage Grotesque', sans-serif;
 
 .pw-stale-banner {
   display: flex;
+  grid-column: 1 / -1;
   align-items: center;
   gap: 10px;
   padding: 10px 16px;
@@ -621,11 +678,4 @@ $font: 'Bricolage Grotesque', sans-serif;
   color: #ffe6a0;
   font-size: 13px;
   line-height: 1.4;
-}
-
-.pw-fallback-note {
-  display: block;
-  font-size: 11px;
-  color: $muted;
-  margin-top: 4px;
 }

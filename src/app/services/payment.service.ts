@@ -19,6 +19,7 @@ import {
   CreateOrderBody,
   CreateOrderRequest,
   CreateRefundRequest,
+  GetCheckoutQuoteRequest,
   GetLicenseDownloadsRequest,
   GetOrderRefundsRequest,
   GetOrderRequest,
@@ -32,6 +33,7 @@ import { BRAND } from '../core/config/brand';
 import { ApiService } from '../core/services/api.service';
 import type { Money, SelectedPriceOffer } from '../models/money';
 import {
+  CheckoutQuote,
   License,
   LicenseDownloadsResponse,
   Order,
@@ -45,6 +47,12 @@ import {
 } from '../models/payment';
 import { AuthService } from './auth.service';
 import { ToastService } from './toast.service';
+
+interface QuotedCheckoutIntent {
+  key: string;
+  quote: CheckoutQuote;
+  previouslyLegacy?: boolean;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -60,7 +68,51 @@ export class PaymentService {
   // userLicenses = signal<License[]>([]);
 
   private razorpayCheckoutOpen = false;
+  private readonly quotedIntents = new Map<string, QuotedCheckoutIntent>();
+  private readonly unreservedLegacyKeys = new Set<string>();
   readonly isInitiatingPayment = signal<boolean>(false);
+
+  getCheckoutQuote(specId: string, licenseOptionId: string, currency?: string | null) {
+    return this.api.execute(new GetCheckoutQuoteRequest(specId, licenseOptionId, currency));
+  }
+
+  resumeQuote(specId: string, licenseOptionId: string): CheckoutQuote | undefined {
+    return this.readQuoteIntent(this.intentKey(specId, licenseOptionId))?.quote;
+  }
+
+  hasLegacyCheckout(specId: string, licenseOptionId: string): boolean {
+    const key = this.readLegacyKey(this.intentKey(specId, licenseOptionId));
+    return !!key && !this.unreservedLegacyKeys.has(key);
+  }
+
+  private intentKey(specId: string, licenseOptionId: string): string {
+    const userId = this.auth.currentUser()?.id ?? 'guest';
+    return `waveyard_checkout_intent_${userId}_${specId}_${licenseOptionId}`;
+  }
+
+  private readQuoteIntent(storageKey: string): QuotedCheckoutIntent | undefined {
+    const cached = this.quotedIntents.get(storageKey);
+    if (cached) return cached;
+    try {
+      const intent = JSON.parse(sessionStorage.getItem(storageKey) ?? 'null');
+      if (typeof intent?.key === 'string' && intent.quote?.quote_id && intent.quote.offer) {
+        return intent;
+      }
+    } catch {
+      // Previous app versions stored a plain idempotency key.
+    }
+    return undefined;
+  }
+
+  private readLegacyKey(storageKey: string): string | undefined {
+    try {
+      const key = sessionStorage.getItem(storageKey);
+      if (key && /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(key)) return key;
+    } catch {
+      // Session storage can be unavailable.
+    }
+    return undefined;
+  }
 
   /**
    * Create an order and open checkout with explicit evidence and idempotency protection
@@ -73,6 +125,9 @@ export class PaymentService {
       selectedPrice?: SelectedPriceOffer;
       displayPriceMoney?: Money;
       priceMoney?: Money;
+      quote?: CheckoutQuote;
+      resuming?: boolean;
+      resumeLegacy?: boolean;
     },
   ): Observable<Order> {
     return defer(() => {
@@ -81,19 +136,49 @@ export class PaymentService {
       }
       this.isInitiatingPayment.set(true);
 
-      const user = this.auth.currentUser();
-      const intentStorageKey = `waveyard_checkout_intent_${user?.id || 'guest'}_${specId}_${licenseOptionId}`;
-      let idempotencyKey: string;
+      const intentStorageKey = this.intentKey(specId, licenseOptionId);
+      const previous = this.readQuoteIntent(intentStorageKey);
+      const legacyKey = previous ? undefined : this.readLegacyKey(intentStorageKey);
+      const quote = evidence?.quote;
+      const resumeLegacy = evidence?.resumeLegacy === true;
+      if (resumeLegacy && !legacyKey) {
+        this.isInitiatingPayment.set(false);
+        return EMPTY;
+      }
+      if (previous && previous.quote.quote_id !== quote?.quote_id) {
+        this.isInitiatingPayment.set(false);
+        return throwError(() => ({ error: { code: 'CHECKOUT_QUOTE_REVIEW_REQUIRED' } }));
+      }
+      const idempotencyKey = previous?.key ?? legacyKey ?? crypto.randomUUID();
+      const previouslyLegacy = previous?.previouslyLegacy || !!legacyKey;
+      const clearIntent = () => {
+        this.quotedIntents.delete(intentStorageKey);
+        this.unreservedLegacyKeys.delete(idempotencyKey);
+        try {
+          sessionStorage.removeItem(intentStorageKey);
+        } catch {}
+      };
+      const restoreLegacyKey = (checkForOrder: boolean) => {
+        this.quotedIntents.delete(intentStorageKey);
+        if (checkForOrder) this.unreservedLegacyKeys.delete(idempotencyKey);
+        else this.unreservedLegacyKeys.add(idempotencyKey);
+        try {
+          sessionStorage.setItem(intentStorageKey, idempotencyKey);
+        } catch {}
+      };
       try {
-        const stored = sessionStorage.getItem(intentStorageKey);
-        if (stored) {
-          idempotencyKey = stored;
-        } else {
-          idempotencyKey = crypto.randomUUID();
+        if (!quote && !resumeLegacy) {
           sessionStorage.setItem(intentStorageKey, idempotencyKey);
         }
       } catch {
-        idempotencyKey = crypto.randomUUID();
+        // Quoted retries also survive unavailable session storage in this tab.
+      }
+      if (quote) {
+        const intent = { key: idempotencyKey, quote, previouslyLegacy };
+        this.quotedIntents.set(intentStorageKey, intent);
+        try {
+          sessionStorage.setItem(intentStorageKey, JSON.stringify(intent));
+        } catch {}
       }
 
       const body: CreateOrderBody = {
@@ -101,7 +186,16 @@ export class PaymentService {
         license_option_id: licenseOptionId,
       };
 
-      if (evidence?.selectedPrice) {
+      if (resumeLegacy) {
+        body.resume_only = true;
+      } else if (quote) {
+        body.currency = quote.requested_currency;
+        body.expected_price_id = quote.offer.price_id;
+        body.expected_revision = quote.offer.revision;
+        body.expected_amount_minor = quote.offer.amount_minor;
+        body.expected_currency = quote.offer.currency;
+        body.quote_id = quote.quote_id;
+      } else if (evidence?.selectedPrice) {
         body.currency = evidence.selectedPrice.currency;
         body.expected_price_id = evidence.selectedPrice.price_id;
         body.expected_revision = evidence.selectedPrice.revision;
@@ -130,9 +224,17 @@ export class PaymentService {
             order.status === 'failed' ||
             order.status === 'cancelled'
           ) {
-            try {
-              sessionStorage.removeItem(intentStorageKey);
-            } catch {}
+            clearIntent();
+            if (
+              (evidence?.resuming || resumeLegacy) &&
+              (order.status === 'failed' || order.status === 'cancelled')
+            ) {
+              this.toast.show(
+                'The earlier checkout is closed. You can use the current price.',
+                'info',
+              );
+              return EMPTY;
+            }
             void this.router.navigate(['/payment/return'], { queryParams: { order_id: order.id } });
             return of(order);
           }
@@ -147,19 +249,35 @@ export class PaymentService {
           const code = error?.error?.code;
           if (error?.status === 202 || code === 'CHECKOUT_IN_FLIGHT') {
             this.toast.show('Checkout is currently in progress. Please wait a moment...', 'info');
-          } else if (error?.status === 409 && code === 'IDEMPOTENCY_CONFLICT') {
-            try {
-              sessionStorage.removeItem(intentStorageKey);
-            } catch {}
+          } else if (resumeLegacy && error?.status === 404 && code === 'CHECKOUT_NOT_FOUND') {
+            // Reuse the key if the buyer confirms a new quote, in case the old request is still committing.
+            this.unreservedLegacyKeys.add(idempotencyKey);
             this.toast.show(
-              'A checkout with different details was already initiated. Please refresh and try again.',
+              'The earlier checkout was not started. Review the current price.',
+              'info',
+            );
+            return EMPTY;
+          } else if (error?.status === 409 && code === 'IDEMPOTENCY_CONFLICT') {
+            if (quote && previouslyLegacy) {
+              restoreLegacyKey(true);
+              this.toast.show('Your earlier checkout is available to resume.', 'info');
+              return EMPTY;
+            }
+            if (!quote && !resumeLegacy) clearIntent();
+            this.toast.show(
+              'A checkout with different details already exists. Check your orders before trying again.',
               'error',
             );
           } else if (code === 'PRICE_CHANGED' || code === 'PRICE_UNAVAILABLE') {
-            try {
-              sessionStorage.removeItem(intentStorageKey);
-            } catch {}
-            this.toast.show('Price changed. Please review the updated offer.', 'info');
+            if (quote && previouslyLegacy) restoreLegacyKey(false);
+            else clearIntent();
+            if (!quote) this.toast.show('Price changed. Please review the updated offer.', 'info');
+          } else if (error?.status === 401) {
+            if (!previous && !resumeLegacy) {
+              if (quote && previouslyLegacy) restoreLegacyKey(true);
+              else clearIntent();
+            }
+            this.toast.show('Sign in to continue to checkout.', 'info');
           } else {
             this.toast.show('Failed to create order. Please try again.', 'error');
           }

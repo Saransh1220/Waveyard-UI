@@ -67,6 +67,7 @@
               [class.on]="selectedLicense()?.id === license.id"
               [class.flagged]="!!badge(i)"
               [attr.aria-checked]="selectedLicense()?.id === license.id"
+              [disabled]="isSubmitting()"
               (click)="select(license)"
             >
               @if (badge(i)) {
@@ -77,12 +78,29 @@
               }
               <span class="pw-lic-name">{{ license.name }}</span>
               <span class="pw-lic-tick" aria-hidden="true"><i class="fas fa-check"></i></span>
-              <span class="pw-lic-price">{{
-                license.displayPriceMoney | money: license.price : license.selectedPrice
-              }}</span>
-              @if (license.selectedPrice?.selection === 'native_fallback') {
-                <span class="pw-fallback-note">{{ license.selectedPrice?.fallback_reason }}</span>
-              }
+              @let selected = selectedLicense()?.id === license.id;
+              @let deal =
+                selected && (quote() || quoteError()) ? quoteDiscount() : license.discount;
+              @let price = (selected ? quote()?.offer : undefined) ?? license.selectedPrice;
+              <div class="pw-lic-price">
+                <app-offer-price
+                  [base]="license.displayPriceMoney"
+                  [fallback]="license.price"
+                  [offer]="price"
+                  [discount]="deal"
+                  [showBadge]="false"
+                />
+                @if (deal || price?.selection === 'native_fallback') {
+                  <span class="pw-lic-offer">
+                    @if (deal) {
+                      <app-sale-badge [discount]="deal" />
+                    }
+                    @if (price?.selection === 'native_fallback') {
+                      <span>{{ price.currency }}</span>
+                    }
+                  </span>
+                }
+              </div>
               <span class="pw-lic-sub">{{ subtitle(license, i) }}</span>
               <ul class="pw-feats">
                 @for (feature of features(license); track feature) {
@@ -104,28 +122,84 @@
             <span>{{ priceChangedNotice() }}</span>
           </div>
         }
+        @if (quoteError()) {
+          <div class="pw-stale-banner" role="status">
+            <span>Checkout price is unavailable.</span>
+            <button class="pw-quote-retry" type="button" (click)="refreshQuote()">Retry</button>
+          </div>
+        }
+        @if (previousQuote(); as previous) {
+          @if (!quoteLoading() && !canResumeAtCurrentPrice()) {
+            <div class="pw-previous">
+              <div>
+                <strong
+                  >Earlier checkout ·
+                  {{
+                    { currency: previous.offer.currency, amount_minor: previous.payable_minor }
+                      | money
+                  }}</strong
+                >
+                <p>Finish or resolve the earlier checkout before using the current price.</p>
+              </div>
+              <button
+                class="pw-quote-retry"
+                type="button"
+                (click)="resumeCheckout()"
+                [disabled]="isSubmitting()"
+              >
+                Resume earlier checkout
+              </button>
+            </div>
+          }
+        } @else if (hasLegacyCheckout()) {
+          <div class="pw-previous">
+            <div>
+              <strong>Earlier checkout</strong>
+              <p>Review the original amount in the payment window before paying.</p>
+            </div>
+            <button
+              class="pw-quote-retry"
+              type="button"
+              (click)="resumeCheckout()"
+              [disabled]="isSubmitting()"
+            >
+              Resume earlier checkout
+            </button>
+          </div>
+        }
         <div class="pw-sel">
           <div class="pw-sel-item">
             <p class="pw-sel-label">Selected License</p>
             <p class="pw-sel-value">{{ selectedLicense()?.name ?? 'None' }}</p>
           </div>
           <div class="pw-sel-item">
-            <p class="pw-sel-label">Total</p>
-            <p class="pw-sel-value">
-              {{
-                selectedLicense()
-                  ? (selectedLicense()?.displayPriceMoney
-                    | money: selectedLicense()?.price : selectedLicense()?.selectedPrice)
-                  : '--'
-              }}
+            <p class="pw-sel-label">
+              {{ quoteDiscount() ? 'Buy now subtotal' : 'Checkout subtotal' }}
             </p>
+            <p class="pw-sel-value" aria-live="polite">
+              @if (quote(); as current) {
+                <app-offer-price [offer]="current.offer" [discount]="quoteDiscount()" />
+              } @else {
+                {{ quoteLoading() ? 'Checking…' : '--' }}
+              }
+            </p>
+            @if (quote(); as current) {
+              <div class="pw-quote-details">
+                @if (current.offer.selection === 'native_fallback') {
+                  <span>Checkout in {{ current.offer.currency }}</span>
+                }
+                @if (current.offer.currency === 'USD') {
+                  <span>Before applicable tax</span>
+                }
+              </div>
+            }
           </div>
         </div>
         <div class="pw-actions">
           <button
             type="button"
             class="pw-btn"
-            [disabled]="!selectedLicense()"
+            [disabled]="!selectedLicense() || isSubmitting()"
             (click)="addToCart()"
           >
             <i class="fas fa-cart-shopping" aria-hidden="true"></i>
@@ -135,13 +209,14 @@
             type="button"
             class="pw-btn pw-btn-primary"
             [disabled]="
-              !selectedLicense() ||
-              selectedLicense()?.selectedPrice?.is_purchasable === false ||
-              isSubmitting()
+              !quote() ||
+              isSubmitting() ||
+              hasLegacyCheckout() ||
+              (!!previousQuote() && !canResumeAtCurrentPrice())
             "
             (click)="buyNow()"
           >
-            Buy now
+            {{ canResumeAtCurrentPrice() ? 'Resume checkout' : 'Buy now' }}
             <i class="fas fa-arrow-right" aria-hidden="true"></i>
           </button>
         </div>

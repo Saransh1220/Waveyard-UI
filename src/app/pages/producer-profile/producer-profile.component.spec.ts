@@ -1,3 +1,4 @@
+import { Location } from '@angular/common';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -188,6 +189,29 @@ describe('ProducerProfileComponent', () => {
     const component = TestBed.createComponent(ProducerProfileComponent).componentInstance;
     component.profile.set({ ...profile, handle: undefined });
     expect(component.handle()).toBe('Night Maker');
+  });
+
+  it('restores the saved genre and loaded catalog pages for the history entry', () => {
+    const location = TestBed.inject(Location);
+    const catalogPage = (dto: SpecDto, page: number) =>
+      of({ data: [dto], metadata: { total: 25, page, per_page: 20 } });
+    specServiceMock.getUserSpecs
+      .mockReturnValueOnce(catalogPage(specDtos[0], 1))
+      .mockReturnValueOnce(catalogPage(specDtos[1], 2))
+      .mockReturnValueOnce(catalogPage(specDtos[0], 1))
+      .mockReturnValueOnce(catalogPage(specDtos[1], 2));
+
+    location.replaceState('/@midnight-audio');
+    const first = TestBed.createComponent(ProducerProfileComponent);
+    first.componentInstance.loadMore();
+    first.componentInstance.selectGenre('Lo-fi');
+    first.destroy();
+
+    const returned = TestBed.createComponent(ProducerProfileComponent).componentInstance;
+    expect(returned.specs().map((spec) => spec.id)).toEqual(['spec-1', 'spec-2']);
+    expect(returned.currentPage()).toBe(2);
+    expect(returned.activeGenre()).toBe('Lo-fi');
+    expect(returned.filteredSpecs().map((spec) => spec.id)).toEqual(['spec-2']);
   });
 
   it('shows the error state when either request fails', () => {

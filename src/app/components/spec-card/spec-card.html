@@ -14,6 +14,14 @@
       alt="{{ spec.title }} Cover"
     />
 
+    @if (spec.promotion; as sale) {
+      <app-sale-badge
+        class="art-sale"
+        [discount]="sale.discount"
+        [selectLicenses]="sale.select_licenses"
+      />
+    }
+
     <button class="beat-play" (click)="playSong($event)" aria-label="Play {{ spec.title }}">
       <i [class]="isCurrentlyPlaying() ? 'fa-solid fa-pause' : 'fa-solid fa-play'"></i>
     </button>
@@ -53,9 +61,12 @@
     <div class="custom-actions-row">
       <button class="purchase-pill" (click)="addToCart($event)" title="Add to cart">
         <span class="purchase-icon"><i class="fa-solid fa-cart-plus"></i></span>
-        <span class="beat-price">{{
-          spec.displayPriceMoney | money: spec.price : spec.selectedPrice
-        }}</span>
+        <app-beat-price
+          class="beat-price"
+          [spec]="spec"
+          [showBadge]="false"
+          [showOriginal]="false"
+        />
       </button>
 
       @if (spec.freeMp3Enabled) {

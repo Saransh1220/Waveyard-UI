@@ -1,5 +1,6 @@
 import { HttpParams } from '@angular/common/http';
 import {
+  CheckoutQuote,
   CreateRefundPayload,
   License,
   LicenseDownloadsResponse,
@@ -33,6 +34,20 @@ export interface CreateOrderBody {
   expected_revision?: number;
   expected_amount_minor?: number;
   expected_currency?: string;
+  quote_id?: string;
+  resume_only?: boolean;
+}
+
+export class GetCheckoutQuoteRequest implements ApiRequest<CheckoutQuote> {
+  readonly path = '/orders/quote';
+  readonly method: HttpMethod = 'GET';
+  readonly _responseType?: CheckoutQuote;
+  readonly params: HttpParams;
+
+  constructor(specId: string, licenseOptionId: string, currency?: string | null) {
+    this.params = new HttpParams().set('spec_id', specId).set('license_option_id', licenseOptionId);
+    if (currency) this.params = this.params.set('currency', currency);
+  }
 }
 
 export interface CheckoutInFlight {

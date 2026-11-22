@@ -1,8 +1,9 @@
-import { CommonModule, DOCUMENT } from '@angular/common';
+import { CommonModule, DOCUMENT, Location } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   inject,
   type OnDestroy,
   signal,
@@ -10,8 +11,9 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { catchError, EMPTY, filter, map, switchMap, tap } from 'rxjs';
+import { catchError, EMPTY, filter, forkJoin, map, of, switchMap, tap } from 'rxjs';
 import { SpecAdapter } from '../../adapters/spec.adapter';
+import { BackButtonComponent } from '../../components/back-button/back-button.component';
 import { SpecCardComponent } from '../../components/spec-card/spec-card';
 import type { PublicUserResponse } from '../../core/api/user.requests';
 import type { Spec } from '../../models';
@@ -23,10 +25,22 @@ import { ToastService } from '../../services/toast.service';
 import { UserService } from '../../services/user.service';
 import { producerLink } from '../../utils/producer-link';
 
+const catalogPageSize = 20;
+
+interface ProducerCatalogState {
+  profileId: string;
+  genre: string;
+  page: number;
+}
+
+interface ProducerHistoryState {
+  producerCatalog?: ProducerCatalogState;
+}
+
 @Component({
   selector: 'app-producer-profile',
   standalone: true,
-  imports: [CommonModule, RouterLink, SpecCardComponent],
+  imports: [CommonModule, RouterLink, SpecCardComponent, BackButtonComponent],
   templateUrl: './producer-profile.component.html',
   styleUrls: ['./producer-profile.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -41,6 +55,8 @@ export class ProducerProfileComponent implements OnDestroy {
   readonly buyerCurrency = inject(BuyerCurrencyService);
   private document = inject(DOCUMENT);
   private router = inject(Router);
+  private location = inject(Location);
+  private destroyRef = inject(DestroyRef);
   private titleService = inject(Title);
   private toast = inject(ToastService);
 
@@ -57,18 +73,66 @@ export class ProducerProfileComponent implements OnDestroy {
     const profile = this.profile();
     if (!profile || this.loadingMore() || this.specs().length >= this.totalSpecs()) return;
     this.loadingMore.set(true);
-    this.specService.getUserSpecs(profile.id, this.currentPage() + 1, 20).subscribe({
-      next: (catalog) => {
-        this.specs.update((items) => [
-          ...items,
-          ...catalog.data.map((dto) => this.adapter.adapt(dto)),
-        ]);
-        this.totalSpecs.set(catalog.metadata.total);
-        this.currentPage.update((page) => page + 1);
-        this.loadingMore.set(false);
+    this.specService
+      .getUserSpecs(profile.id, this.currentPage() + 1, catalogPageSize)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (catalog) => {
+          if (this.profile() !== profile) return;
+          this.specs.update((items) => [
+            ...items,
+            ...catalog.data.map((dto) => this.adapter.adapt(dto)),
+          ]);
+          this.totalSpecs.set(catalog.metadata.total);
+          this.currentPage.update((page) => page + 1);
+          this.loadingMore.set(false);
+          this.saveCatalogState();
+        },
+        error: () => {
+          if (this.profile() === profile) this.loadingMore.set(false);
+        },
+      });
+  }
+
+  selectGenre(genre: string): void {
+    this.activeGenre.set(genre);
+    this.saveCatalogState();
+  }
+
+  private saveCatalogState(): void {
+    const profile = this.profile();
+    if (!profile) return;
+
+    const state = this.location.getState() as ProducerHistoryState | null;
+    this.location.replaceState(this.location.path(true), '', {
+      ...state,
+      producerCatalog: {
+        profileId: profile.id,
+        genre: this.activeGenre(),
+        page: this.currentPage(),
       },
-      error: () => this.loadingMore.set(false),
     });
+  }
+
+  private loadCatalog(profileId: string) {
+    const state = this.location.getState() as ProducerHistoryState | null;
+    const saved = state?.producerCatalog;
+    const page = saved?.profileId === profileId ? saved.page : 1;
+    const genre = saved?.profileId === profileId ? saved.genre : 'All';
+
+    return this.specService.getUserSpecs(profileId, 1, catalogPageSize).pipe(
+      switchMap((first) => {
+        const count = Math.min(page, Math.ceil(first.metadata.total / catalogPageSize));
+        if (count <= 1) return of({ pages: [first], genre });
+        const remaining = Array.from({ length: count - 1 }, (_, index) =>
+          this.specService.getUserSpecs(profileId, index + 2, catalogPageSize),
+        );
+        return forkJoin(remaining).pipe(
+          map((pages) => ({ pages: [first, ...pages], genre })),
+          catchError(() => of({ pages: [first], genre })),
+        );
+      }),
+    );
   }
 
   genres = computed(() => [
@@ -117,6 +181,8 @@ export class ProducerProfileComponent implements OnDestroy {
         }),
         tap(() => {
           this.loading.set(true);
+          this.loadingMore.set(false);
+          this.profile.set(null);
           this.error.set(false);
           this.specs.set([]);
           this.activeGenre.set('All');
@@ -131,7 +197,7 @@ export class ProducerProfileComponent implements OnDestroy {
               this.titleService.setTitle(`${profile.display_name || profile.name} · Waveyard`);
               this.canonicalize(params.get('handle') || '', profile);
             }),
-            switchMap((profile) => this.specService.getUserSpecs(profile.id, 1, 20)),
+            switchMap((profile) => this.loadCatalog(profile.id)),
             catchError(() => {
               this.error.set(true);
               this.loading.set(false);
@@ -141,10 +207,13 @@ export class ProducerProfileComponent implements OnDestroy {
         ),
         takeUntilDestroyed(),
       )
-      .subscribe((catalog) => {
-        this.specs.set(catalog.data.map((spec) => this.adapter.adapt(spec)));
-        this.totalSpecs.set(catalog.metadata.total);
-        this.currentPage.set(1);
+      .subscribe(({ pages, genre }) => {
+        this.specs.set(
+          pages.flatMap((catalog) => catalog.data.map((spec) => this.adapter.adapt(spec))),
+        );
+        this.totalSpecs.set(pages[0].metadata.total);
+        this.currentPage.set(pages.length);
+        this.activeGenre.set(this.genres().includes(genre) ? genre : 'All');
         this.loading.set(false);
       });
   }

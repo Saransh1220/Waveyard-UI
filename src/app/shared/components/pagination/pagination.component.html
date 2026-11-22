@@ -1,0 +1,82 @@
+<nav
+  aria-label="Pagination"
+  class="pagination-container"
+  [hidden]="totalPages() <= 1 && !showPerPage()"
+  [class.waveyard]="variant() === 'waveyard'"
+  [class.studio]="variant() === 'studio'"
+  [class.admin]="variant() === 'admin'"
+  [class.with-per-page]="showPerPage()"
+>
+  <p class="pagination-info" aria-live="polite">
+    @if (total() > 0) {
+      <span
+        >Showing <strong>{{ startItem() }}-{{ endItem() }}</strong> of
+        <strong>{{ total() }}</strong></span
+      >
+    } @else {
+      <span>No results</span>
+    }
+  </p>
+
+  @if (showPerPage()) {
+    <label class="pagination-perpage">
+      <span>Per page</span>
+      <span class="page-size">
+        <select (change)="onPerPageChange($event)">
+          @for (option of availablePageSizes(); track option) {
+            <option [value]="option" [selected]="option === perPage()">{{ option }}</option>
+          }
+        </select>
+        <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+      </span>
+    </label>
+  }
+
+  @if (totalPages() > 1) {
+    <div class="pagination-controls">
+      <button
+        type="button"
+        class="pager-btn prev"
+        aria-label="Previous page"
+        [disabled]="currentPage() <= 1"
+        (click)="onPageChange(currentPage() - 1)"
+      >
+        <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+        <span aria-hidden="true">Previous</span>
+      </button>
+
+      <div class="pages">
+        @for (page of visiblePages(); track page === -1 ? -$index - 1 : page) {
+          @if (page === -1) {
+            <span class="ellipsis" aria-hidden="true">…</span>
+          } @else {
+            <button
+              type="button"
+              class="page-btn"
+              [class.active]="page === currentPage()"
+              [attr.aria-current]="page === currentPage() ? 'page' : null"
+              [attr.aria-label]="'Page ' + page"
+              (click)="onPageChange(page)"
+            >
+              {{ page }}
+            </button>
+          }
+        }
+      </div>
+      <span class="page-position"
+        >Page <strong>{{ currentPage() }}</strong> of {{ totalPages() }}</span
+      >
+
+      <button
+        type="button"
+        class="pager-btn next"
+        aria-label="Next page"
+        [disabled]="currentPage() >= totalPages()"
+        (click)="onPageChange(currentPage() + 1)"
+      >
+        <span aria-hidden="true">Next</span>
+        <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+      </button>
+    </div>
+  }
+</nav>

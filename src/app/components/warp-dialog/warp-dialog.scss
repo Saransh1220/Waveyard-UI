@@ -20,7 +20,7 @@ $spring: linear(0, 0.2 6%, 0.62 15%, 0.92 25%, 1.04 38%, 1.05 46%, 1.02 58%, 0.9
 .warp-base {
   position: absolute;
   inset: 0;
-  background: linear-gradient(rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.1)), rgba(8, 4, 10, 0.94);
+  background: rgba(18, 12, 15, 0.98);
   animation: warp-fade 0.35s $ease both;
 }
 
@@ -60,13 +60,13 @@ $spring: linear(0, 0.2 6%, 0.62 15%, 0.92 25%, 1.04 38%, 1.05 46%, 1.02 58%, 0.9
 .orb-left {
   top: -25%;
   left: -50%;
-  background: rgba(239, 68, 68, 0.9);
+  background: rgba(214, 60, 82, 0.23);
 }
 
 .orb-right {
   top: 25%;
   left: 50%;
-  background: rgba(239, 68, 68, 0.8);
+  background: rgba(214, 60, 82, 0.17);
 }
 
 .stage {

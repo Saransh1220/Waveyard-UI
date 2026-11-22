@@ -147,8 +147,12 @@
 
       <div class="mp-right">
         <div class="mp-price-block">
-          <div class="mp-price-lbl">from</div>
-          <div class="mp-price">{{ minimumLicensePriceLabel() }}</div>
+          @if (promotedTrack(); as promoted) {
+            <app-beat-price class="mp-price" [spec]="promoted" />
+          } @else {
+            <div class="mp-price-lbl">from</div>
+            <div class="mp-price">{{ minimumLicensePriceLabel() }}</div>
+          }
         </div>
 
         <button class="mp-buy-btn" (click)="addToCart($event)">
@@ -323,7 +327,11 @@
           <div class="panel-spec">
             <div class="k">License</div>
             <div class="v">
-              <span>from</span><em>{{ minimumLicensePriceLabel() }}</em>
+              @if (promotedTrack(); as promoted) {
+                <app-beat-price [spec]="promoted" />
+              } @else {
+                <span>from</span><em>{{ minimumLicensePriceLabel() }}</em>
+              }
             </div>
           </div>
         </div>
@@ -568,7 +576,11 @@
         <div class="mobile-actions">
           <button class="mobile-buy" (click)="addToCart($event)">
             <i class="fa-solid fa-cart-shopping"></i>
-            Buy from {{ minimumLicensePriceLabel() }}
+            @if (promotedTrack(); as promoted) {
+              Buy <app-beat-price [spec]="promoted" />
+            } @else {
+              Buy from {{ minimumLicensePriceLabel() }}
+            }
           </button>
           <button class="mobile-action-icon" (click)="shareBeat($event)" aria-label="Share beat">
             <i class="fa-solid fa-share-nodes"></i>

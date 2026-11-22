@@ -1,19 +1,16 @@
-import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { AppearanceSettingsComponent } from '../../components/settings/appearance-settings/appearance-settings.component';
 import { BRAND } from '../../core/config/brand';
-import { ThemeService } from '../../services/theme.service';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, AppearanceSettingsComponent],
+  imports: [AppearanceSettingsComponent],
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SettingsComponent {
   readonly brand = BRAND;
-  themeService = inject(ThemeService);
   activeTab: 'appearance' | 'preferences' | 'account' = 'appearance';
 }

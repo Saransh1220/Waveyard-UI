@@ -418,3 +418,16 @@
     width: 36px;
   }
 }
+.art-sale {
+  position: absolute;
+  inset-block-start: 10px;
+  inset-inline-start: 10px;
+  z-index: 1;
+  max-inline-size: calc(100% - 20px);
+  --sale-bg: var(--hot, #ff4969);
+  --sale-ink: #210b12;
+  --sale-padding: 0.36rem 0.54rem;
+  --sale-size: 0.75rem;
+  box-shadow: 0 2px 8px #16090c44;
+  pointer-events: none;
+}

@@ -3,6 +3,7 @@ import { Observable } from 'rxjs';
 import {
   DeleteSpecRequest,
   GetUserSpecsRequest,
+  ProducerSpecFilter,
   SpecDto,
   UpdateSpecDto,
   UpdateSpecRequest,
@@ -20,8 +21,9 @@ export class SpecService {
     userId: string,
     page: number = 1,
     limit: number = 20,
+    filter?: ProducerSpecFilter,
   ): Observable<PaginatedResponse<SpecDto>> {
-    return this.api.execute(new GetUserSpecsRequest(userId, page, limit));
+    return this.api.execute(new GetUserSpecsRequest(userId, page, limit, filter));
   }
 
   updateSpec(specId: string, data: UpdateSpecDto | FormData): Observable<SpecDto> {

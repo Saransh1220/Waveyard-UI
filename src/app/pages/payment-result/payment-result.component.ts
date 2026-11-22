@@ -39,6 +39,7 @@ export class PaymentResultComponent implements OnInit {
   orderId = signal<string | null>(null);
   copied = signal(false);
   readonly paidTotal = signal<string | null>(null);
+  readonly couponSavings = signal<string | null>(null);
 
   ngOnInit(): void {
     const rawOrderId = this.route.snapshot.queryParamMap.get('order_id');
@@ -71,7 +72,16 @@ export class PaymentResultComponent implements OnInit {
                   next: (order) => {
                     if (order.status === 'paid') {
                       this.paidTotal.set(
-                        this.currency.formatMinorMoney(order.amount, order.currency),
+                        this.currency.formatMinorMoney(
+                          order.captured_amount_minor ?? order.amount,
+                          order.currency,
+                        ),
+                      );
+                      const savings = order.notes?.['pricing_snapshot']?.discount_minor;
+                      this.couponSavings.set(
+                        Number.isSafeInteger(savings) && savings > 0
+                          ? this.currency.formatMinorMoney(savings, order.currency)
+                          : null,
                       );
                     }
                   },

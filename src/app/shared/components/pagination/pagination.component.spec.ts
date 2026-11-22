@@ -78,6 +78,12 @@ describe('PaginationComponent', () => {
     expect(el.querySelector('.pagination-container')?.classList).toContain('studio');
     expect(el.querySelector('.prev')?.textContent).toContain('Prev');
     expect(el.querySelector('.ellipsis')).toBeTruthy();
+    expect(el.querySelector('nav')?.getAttribute('aria-label')).toBe('Pagination');
+    expect(el.querySelector('.page-btn[aria-current="page"]')?.getAttribute('aria-label')).toBe(
+      'Page 1',
+    );
+    expect(el.querySelector('.page-position')?.textContent?.trim()).toBe('Page 1 of 10');
+    expect(el.querySelector<HTMLSelectElement>('select')?.value).toBe('10');
 
     const select = el.querySelector('select') as HTMLSelectElement;
     select.value = '16';

@@ -318,7 +318,7 @@
   display: flex;
   flex-direction: column;
   padding: 20px 20px 16px;
-  // Hardcoded dark — stays constant regardless of light/dark theme
+  // Use a dark backdrop behind the license cards.
   background-color: #1a1814;
   background-image: radial-gradient(circle at top right, rgba(200, 232, 79, 0.06), transparent 24%);
   color: #f0e9d6;

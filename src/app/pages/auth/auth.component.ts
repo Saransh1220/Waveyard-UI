@@ -6,7 +6,6 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { BRAND } from '../../core/config/brand';
 import { AuthService } from '../../services/auth.service';
-import { ThemeService } from '../../services/theme.service';
 import { ToastService } from '../../services/toast.service';
 
 @Component({
@@ -22,7 +21,6 @@ export class AuthComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private location = inject(Location);
   private authService = inject(AuthService);
-  private themeService = inject(ThemeService);
   private toastService = inject(ToastService);
   private socialAuthService = inject(SocialAuthService);
 

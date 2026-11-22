@@ -1,0 +1,103 @@
+@if (w.mode() !== 'list') {
+  <button type="button" class="pw-back" (click)="w.back()" [disabled]="w.busy()">
+    <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Coupons
+  </button>
+}
+
+<header class="pw-header">
+  <div>
+    <h1 #heading tabindex="-1">
+      @switch (w.mode()) {
+        @case ('list') {
+          Coupons
+        }
+        @case ('form') {
+          {{ w.active() ? 'Edit coupon' : 'New coupon' }}
+        }
+        @case ('enroll') {
+          Enroll beats
+        }
+        @case ('preview') {
+          Eligible licenses
+        }
+      }
+    </h1>
+    @if (w.mode() === 'list') {
+      <p>Manage discounts for your catalog.</p>
+    } @else if (w.active(); as coupon) {
+      <div class="pw-header-context">
+        @if (w.mode() !== 'form') {
+          <span>{{ coupon.rules.name }}</span>
+        }
+        @let status = w.describeState(coupon);
+        <span class="pw-status" [attr.data-status]="status">{{ status }}</span>
+      </div>
+    }
+  </div>
+  @if (w.mode() === 'list') {
+    <button
+      type="button"
+      class="pw-button pw-primary"
+      (click)="w.openForm(null)"
+      [disabled]="w.busy() || !!w.confirmation()"
+    >
+      <i class="fa-solid fa-plus" aria-hidden="true"></i> New coupon
+    </button>
+  }
+</header>
+
+@if (w.conflict()) {
+  <div class="pw-message">
+    <span>Reload the latest revision to continue.</span>
+    <button type="button" class="pw-button" (click)="w.reloadLatest()" [disabled]="w.busy()">
+      Reload latest
+    </button>
+  </div>
+}
+@if (w.busy()) {
+  <div class="pw-loading" role="status"><span class="pw-spinner"></span> Working…</div>
+}
+
+@switch (w.mode()) {
+  @case ('list') {
+    <app-promotion-list />
+  }
+  @case ('form') {
+    <app-promotion-editor />
+  }
+  @case ('enroll') {
+    <app-promotion-enrollment />
+  }
+  @case ('preview') {
+    <app-promotion-preview />
+  }
+}
+
+<dialog
+  #confirmationDialog
+  class="pw-dialog"
+  aria-labelledby="pw-dialog-title"
+  aria-describedby="pw-dialog-description"
+  (cancel)="cancelConfirmation($event)"
+  (click)="$event.target === confirmationDialog && cancelConfirmation()"
+>
+  @if (dialogContent(); as content) {
+    <div class="pw-dialog-content">
+      <h2 id="pw-dialog-title">{{ content.title }}</h2>
+      <p id="pw-dialog-description">{{ content.message }}</p>
+      <div class="pw-actions">
+        <button type="button" class="pw-button" autofocus (click)="cancelConfirmation()">
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="pw-button pw-primary"
+          [class.pw-destructive]="content.danger"
+          (click)="confirm()"
+        >
+          {{ content.label }}
+        </button>
+      </div>
+    </div>
+  }
+</dialog>

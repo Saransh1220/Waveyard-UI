@@ -117,8 +117,6 @@ h2 {
   padding: 0;
 }
 
-@include ui.dark-tokens;
-
 // Inverted anchor panel. Declared after the theme tokens so it always wins; it re-maps the
 // ink/cream tokens so projected content (charts, figures) adapts without extra styling.
 :host([data-tone='dark']) {

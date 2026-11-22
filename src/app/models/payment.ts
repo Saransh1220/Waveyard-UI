@@ -1,3 +1,16 @@
+import type { SelectedPriceOffer } from './money';
+
+export interface CheckoutQuote {
+  quote_id: string;
+  spec_id: string;
+  license_option_id: string;
+  requested_currency: string;
+  offer: SelectedPriceOffer;
+  discount_minor: number;
+  discount_percent_bps?: number;
+  payable_minor: number;
+}
+
 // Order model - matches backend response
 export interface Order {
   id: string;
@@ -5,6 +18,7 @@ export interface Order {
   spec_id: string;
   license_type: string;
   amount: number; // in paise
+  captured_amount_minor?: number;
   currency: string;
   razorpay_order_id: string | null;
   provider?: 'razorpay' | 'dodo' | string;

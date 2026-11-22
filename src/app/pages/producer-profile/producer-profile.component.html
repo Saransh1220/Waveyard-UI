@@ -1,4 +1,5 @@
 <main class="producer-page">
+  <app-back-button class="profile-back" />
   @if (loading()) {
     <div class="skeleton" aria-busy="true" aria-label="Loading producer profile">
       <div class="sk-banner"></div>
@@ -94,7 +95,7 @@
                 type="button"
                 [class.on]="activeGenre() === genre"
                 [attr.aria-pressed]="activeGenre() === genre"
-                (click)="activeGenre.set(genre)"
+                (click)="selectGenre(genre)"
               >
                 {{ genre }}
               </button>

@@ -1,0 +1,247 @@
+@if (w.catalogReady()) {
+  <section aria-label="Beat catalog">
+    <div class="pw-toolbar">
+      <div class="pw-segment" role="group" aria-label="Filter beats">
+        <button
+          type="button"
+          [promotionToggle]="!w.selectedOnly()"
+          (click)="w.filterSelection(false)"
+        >
+          All beats
+        </button>
+        <button
+          type="button"
+          [promotionToggle]="w.selectedOnly()"
+          (click)="w.filterSelection(true)"
+        >
+          Selected <span>{{ w.selected().size }}</span>
+        </button>
+      </div>
+      <label class="pw-search">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i
+        ><span class="pw-sr">Search your beats</span>
+        <input
+          type="search"
+          placeholder="Search beats"
+          [value]="w.search()"
+          (input)="w.setSearch($event.target.value)"
+        />
+      </label>
+    </div>
+    @if (w.missingBeats().length) {
+      <div class="pw-message pw-error">
+        <span>{{ w.missingBeats().length }} selected beats are unavailable.</span>
+        <button
+          type="button"
+          class="pw-button pw-quiet"
+          (click)="w.removeMissing()"
+          [disabled]="w.busy() || w.pickerLoading()"
+        >
+          Remove unavailable beats
+        </button>
+      </div>
+    }
+    @if (w.blockedSelected().length) {
+      <div class="pw-message pw-error">
+        Remove the beats that already belong to an overlapping coupon before saving.
+        <button type="button" class="pw-button pw-quiet" (click)="w.filterSelection(true, true)">
+          Review selected
+        </button>
+      </div>
+    }
+    <ul class="pw-beats" aria-label="Beats for enrollment" [attr.aria-busy]="w.pickerLoading()">
+      @for (beat of w.visibleBeats(); track beat.id) {
+        @let enrollment = w.selected().get(beat.id);
+        @let licenseCount = enrollment?.option_ids?.length ?? 0;
+        @let options = w.eligibleOptions(beat);
+        @let conflict = w.enrollmentConflicts().get(beat.id);
+        <li class="pw-beat" [class.is-selected]="!!enrollment" [class.pw-beat-blocked]="!!conflict">
+          <div class="pw-beat-main">
+            <button
+              type="button"
+              class="pw-beat-label"
+              [promotionToggle]="!!enrollment"
+              (click)="w.selectBeat(beat.id, !enrollment)"
+              [disabled]="
+                w.busy() ||
+                w.pickerLoading() ||
+                (!enrollment && (!!conflict || !options.length || w.selected().size >= w.maxBeats))
+              "
+            >
+              <span class="pw-mark" aria-hidden="true"
+                ><i
+                  class="fa-solid"
+                  [class.fa-check]="!!enrollment"
+                  [class.fa-lock]="!enrollment && !!conflict"
+                  [class.fa-plus]="!enrollment && !conflict"
+                ></i
+              ></span>
+              <span class="pw-artwork">
+                @if (beat.imageUrl) {
+                  <img [src]="beat.imageUrl" alt="" width="36" height="36" loading="lazy" />
+                } @else {
+                  <i class="fa-solid fa-music" aria-hidden="true"></i>
+                }
+              </span>
+              <span class="pw-beat-name">
+                <strong>{{ beat.title }}</strong>
+                @if (conflict) {
+                  <span class="pw-meta pw-conflict-label"
+                    >In {{ conflict.coupon_name }} · overlapping dates</span
+                  >
+                } @else {
+                  <span class="pw-meta"
+                    >{{ options.length }} eligible
+                    {{ options.length === 1 ? 'license' : 'licenses' }}</span
+                  >
+                }
+              </span>
+            </button>
+            @if (enrollment && options.length && !conflict) {
+              <details
+                promotionDisclosure
+                #licenseMenu="promotionDisclosure"
+                name="promotion-license-modes"
+                class="pw-menu pw-license-mode"
+              >
+                <summary
+                  class="pw-license-trigger"
+                  [attr.aria-label]="
+                    'License scope for ' +
+                    beat.title +
+                    ': ' +
+                    (enrollment.all_paid ? 'All paid licenses' : 'Specific licenses')
+                  "
+                >
+                  <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
+                  <span>{{
+                    enrollment.all_paid
+                      ? 'All paid licenses'
+                      : licenseCount
+                        ? licenseCount + ' selected'
+                        : 'Choose licenses'
+                  }}</span>
+                  <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+                </summary>
+                <div class="pw-popup pw-license-popup">
+                  <button
+                    type="button"
+                    [promotionToggle]="enrollment.all_paid"
+                    [disabled]="w.busy() || w.pickerLoading()"
+                    (click)="licenseMenu.close(true); w.setLicenseMode(beat, true)"
+                  >
+                    <span>All paid licenses</span>
+                    @if (enrollment.all_paid) {
+                      <i class="fa-solid fa-check" aria-hidden="true"></i>
+                    }
+                  </button>
+                  <button
+                    type="button"
+                    [promotionToggle]="!enrollment.all_paid"
+                    [disabled]="w.busy() || w.pickerLoading()"
+                    (click)="licenseMenu.close(true); w.setLicenseMode(beat, false)"
+                  >
+                    <span>Specific licenses</span>
+                    @if (!enrollment.all_paid) {
+                      <i class="fa-solid fa-check" aria-hidden="true"></i>
+                    }
+                  </button>
+                </div>
+              </details>
+            }
+          </div>
+          @if (enrollment && !conflict) {
+            @if (!options.length) {
+              <p class="pw-beat-options pw-meta">
+                No eligible paid licenses. Deselect this beat before saving.
+              </p>
+            } @else if (!enrollment.all_paid) {
+              <fieldset class="pw-beat-options pw-fieldset">
+                <legend>License options for {{ beat.title }}</legend>
+                <div class="pw-options pw-license-options">
+                  @for (option of options; track option.id) {
+                    @let chosen = enrollment.option_ids?.includes(option.id) ?? false;
+                    <button
+                      type="button"
+                      class="pw-choice pw-license-choice"
+                      [promotionToggle]="chosen"
+                      (click)="w.selectOption(beat, option.id, !chosen)"
+                      [disabled]="
+                        w.busy() || w.pickerLoading() || (!chosen && licenseCount >= w.maxOptions)
+                      "
+                    >
+                      <i
+                        class="fa-solid"
+                        [class.fa-check]="chosen"
+                        [class.fa-plus]="!chosen"
+                        aria-hidden="true"
+                      ></i>
+                      <span
+                        ><strong>{{ option.name }}</strong>
+                        @if (option.fileTypes.length) {
+                          <small>{{ option.fileTypes.join(', ') }}</small>
+                        }
+                      </span>
+                    </button>
+                  }
+                  @for (option of w.unavailableOptions(beat, enrollment); track option) {
+                    <button
+                      type="button"
+                      class="pw-choice pw-license-choice"
+                      (click)="w.selectOption(beat, option, false)"
+                      [disabled]="w.busy() || w.pickerLoading()"
+                    >
+                      <i class="fa-solid fa-xmark" aria-hidden="true"></i> Remove unavailable
+                      license
+                    </button>
+                  }
+                </div>
+              </fieldset>
+            }
+          }
+        </li>
+      } @empty {
+        <li class="pw-empty">
+          <h3>No beats match this view</h3>
+          <p>Try another search or change the selection filter.</p>
+        </li>
+      }
+    </ul>
+    <app-pagination
+      variant="studio"
+      [currentPage]="w.pickerPage()"
+      [total]="w.pickerTotal()"
+      [perPage]="w.pickerPageSize"
+      (pageChange)="w.loadCatalog($event)"
+    />
+    <div class="pw-footer pw-enrollment-footer">
+      <span aria-live="polite"
+        ><strong>{{ w.selected().size }}</strong> of {{ w.maxBeats }} selected</span
+      >
+      <button
+        type="button"
+        class="pw-button pw-primary"
+        (click)="w.saveEnrollment()"
+        [disabled]="
+          w.busy() ||
+          w.pickerLoading() ||
+          w.conflict() ||
+          !w.enrollmentDirty() ||
+          !!w.blockedSelected().length ||
+          !!w.missingBeats().length
+        "
+      >
+        Save enrollment
+      </button>
+    </div>
+  </section>
+} @else if (w.pickerLoading()) {
+  <div class="pw-loading" role="status">
+    <span class="pw-spinner"></span>Checking beat availability…
+  </div>
+} @else if (!w.busy()) {
+  <div class="pw-empty">
+    <h2>Couldn’t load the catalog</h2>
+    <button type="button" class="pw-button" (click)="w.loadCatalog()">Retry loading beats</button>
+  </div>
+}

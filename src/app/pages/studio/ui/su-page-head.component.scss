@@ -55,10 +55,6 @@
   }
 }
 
-// Projected controls (range pills, buttons) inherit these tokens, so the dark-theme
-// surface values must be defined here too.
-@include ui.dark-tokens;
-
 h1 {
   margin: 0;
   font-size: clamp(30px, 4.4vw, 46px);

@@ -1,11 +1,9 @@
 import { SocialAuthService } from '@abacritt/angularx-social-login';
 import { Location } from '@angular/common';
-import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
-import { ThemeService } from '../../services/theme.service';
 import { ToastService } from '../../services/toast.service';
 import { AuthComponent } from './auth.component';
 
@@ -28,7 +26,6 @@ describe('AuthComponent', () => {
         { provide: Router, useValue: { navigate } },
         { provide: Location, useValue: { go } },
         { provide: AuthService, useValue: { login, register, googleLogin } },
-        { provide: ThemeService, useValue: { activeTheme: signal('vampire') } },
         { provide: ToastService, useValue: { show } },
         { provide: SocialAuthService, useValue: { authState: authState$ } },
       ],

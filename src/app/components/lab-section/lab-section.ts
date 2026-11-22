@@ -13,13 +13,14 @@ import { Router } from '@angular/router';
 import { type LicenseType, type Spec } from '../../models';
 import { LabService, PlayerService } from '../../services';
 import { CurrencyService } from '../../services/currency.service';
+import { BeatPriceComponent } from '../../shared/components/offer-price/offer-price.component';
 import { SpecCardComponent } from '../spec-card/spec-card';
 import { LoadingSpinnerComponent } from '../ui/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-lab-section',
   standalone: true,
-  imports: [SpecCardComponent, LoadingSpinnerComponent],
+  imports: [SpecCardComponent, LoadingSpinnerComponent, BeatPriceComponent],
   templateUrl: './lab-section.html',
   styleUrls: ['./lab-section.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

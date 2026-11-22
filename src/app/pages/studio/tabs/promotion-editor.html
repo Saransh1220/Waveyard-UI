@@ -1,0 +1,131 @@
+<form [formGroup]="w.form" (ngSubmit)="w.saveForm()" class="pw-editor" aria-label="Coupon settings">
+  @if (w.active()?.published_revision) {
+    <p class="pw-message">The published revision stays active until you publish these edits.</p>
+  }
+  <section class="pw-form-row" aria-labelledby="promotion-discount">
+    <h2 id="promotion-discount">Discount</h2>
+    <div class="pw-discount-fields">
+      <label class="pw-field"
+        >Coupon name<input
+          formControlName="name"
+          maxlength="100"
+          required
+          placeholder="e.g. Weekend sale"
+      /></label>
+      <fieldset class="pw-fieldset">
+        <legend>Discount type</legend>
+        <div class="pw-segment">
+          <button
+            type="button"
+            [promotionToggle]="w.values().type === 'percent'"
+            (click)="w.setDiscountType('percent')"
+          >
+            Percentage
+          </button>
+          <button
+            type="button"
+            [promotionToggle]="w.values().type === 'fixed'"
+            (click)="w.setDiscountType('fixed')"
+          >
+            Fixed amount
+          </button>
+        </div>
+      </fieldset>
+      @if (w.values().type === 'percent') {
+        <fieldset class="pw-fieldset">
+          <legend>Percentage</legend>
+          <div class="pw-options">
+            @for (preset of w.presets; track preset) {
+              <button
+                type="button"
+                class="pw-choice"
+                [promotionToggle]="w.values().preset === preset.toString()"
+                (click)="w.choosePreset(preset.toString())"
+              >
+                {{ preset }}%
+              </button>
+            }
+            <button
+              type="button"
+              class="pw-choice"
+              [promotionToggle]="w.values().preset === 'custom'"
+              (click)="w.choosePreset('custom')"
+            >
+              Custom
+            </button>
+          </div>
+        </fieldset>
+        @if (w.values().preset === 'custom') {
+          <label class="pw-field"
+            >Custom percentage<input
+              formControlName="custom"
+              inputmode="decimal"
+              placeholder="12.50"
+              required
+          /></label>
+        }
+      }
+      <fieldset class="pw-fieldset">
+        <legend>Checkout currencies</legend>
+        <div class="pw-options">
+          @for (currency of w.currencies(); track currency.code) {
+            @let included = w.values().currencies.includes(currency.code);
+            <button
+              type="button"
+              class="pw-choice"
+              [promotionToggle]="included"
+              (click)="w.toggleCurrency(currency.code, !included)"
+            >
+              <i
+                aria-hidden="true"
+                class="fa-solid"
+                [class.fa-check]="included"
+                [class.fa-plus]="!included"
+              ></i
+              ><span>{{ currency.code }}</span>
+            </button>
+          }
+        </div>
+      </fieldset>
+      @if (w.values().type === 'fixed') {
+        <div class="pw-fields">
+          @for (code of w.values().currencies; track code) {
+            <label class="pw-field"
+              >Amount in {{ code
+              }}<input
+                inputmode="decimal"
+                [value]="w.values().amounts[code] || ''"
+                (input)="w.updateAmount(code, $event.target.value)"
+                required
+            /></label>
+          }
+        </div>
+      }
+    </div>
+  </section>
+  <section class="pw-form-row" aria-labelledby="promotion-schedule">
+    <div class="pw-section-label">
+      <h2 id="promotion-schedule">Schedule</h2>
+      <p class="pw-meta">{{ w.timeZone }}</p>
+    </div>
+    <div class="pw-stack">
+      <div class="pw-fields">
+        <label class="pw-field"
+          >Starts <span>Optional</span
+          ><input type="datetime-local" step="1" formControlName="starts"
+        /></label>
+        <label class="pw-field"
+          >Ends <span>Optional</span><input type="datetime-local" step="1" formControlName="ends"
+        /></label>
+      </div>
+    </div>
+  </section>
+  <div class="pw-footer pw-actions">
+    <button type="button" class="pw-button pw-quiet" (click)="w.back()" [disabled]="w.busy()">
+      Cancel
+    </button>
+    <button type="submit" class="pw-button pw-primary" [disabled]="w.busy() || w.conflict()">
+      Save draft <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+    </button>
+  </div>
+</form>

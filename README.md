@@ -2,6 +2,10 @@
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.6.
 
+## UI design system
+
+Open the [Waveyard visual design guide](docs/design-system/index.html) in a browser from the checkout. It includes the shared palette, typography and icon specimens, interactive component examples, and a source-linked consistency audit. The icon gallery uses the Font Awesome package installed with the app dependencies.
+
 ## Development server
 
 To start a local development server, run:

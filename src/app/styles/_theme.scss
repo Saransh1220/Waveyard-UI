@@ -1,156 +1,30 @@
-// Theme Definitions
-@use 'sass:color';
-@use 'sass:list';
-@use 'sass:map';
+:root {
+  color-scheme: dark;
+  --bg-color: #0e0d0b;
+  --bg-color-rgb: 14, 13, 11;
+  --card-bg-color: #1a1814;
+  --card-bg-color-rgb: 26, 24, 20;
+  --text-color: #f0e9d6;
+  --text-color-rgb: 240, 233, 214;
+  --brand-color: #ff4d68;
+  --brand-color-rgb: 255, 77, 104;
+  --on-brand-color: #0e0d0b;
+  --line-color: var(--text-color);
+  --line-color-rgb: var(--text-color-rgb);
 
-// --- Mixins for Theme Generation ---
-@mixin theme-properties(
-  $bg,
-  $card,
-  $text,
-  $brand,
-  $line,
-  $on-brand,
-  $faded-rgb,
-  $noise-blend: normal,
-  $noise-opacity: 0
-) {
-  --noise-blend: normal;
-  --noise-opacity: 0;
+  --cream: var(--bg-color);
+  --cream-2: var(--card-bg-color);
+  --cream-3: #26241e;
+  --ink: var(--text-color);
+  --ink-2: #c4bdab;
+  --ink-mute: #8a8373;
+  --faded-ink: rgba(var(--text-color-rgb), 0.05);
+  --hot: var(--brand-color);
+  --lime: #d9f561;
+  --sun: #ffd859;
 
-  --bg-color: #{$bg};
-  --bg-color-rgb:
-    #{color.channel($bg, 'red', $space: rgb)}, #{color.channel($bg, 'green', $space: rgb)},
-    #{color.channel($bg, 'blue', $space: rgb)};
-
-  --card-bg-color: #{$card};
-  --card-bg-color-rgb:
-    #{color.channel($card, 'red', $space: rgb)}, #{color.channel($card, 'green', $space: rgb)},
-    #{color.channel($card, 'blue', $space: rgb)};
-
-  --text-color: #{$text};
-  --text-color-rgb:
-    #{color.channel($text, 'red', $space: rgb)}, #{color.channel($text, 'green', $space: rgb)},
-    #{color.channel($text, 'blue', $space: rgb)};
-
-  --brand-color: #{$brand};
-  --brand-color-rgb:
-    #{color.channel($brand, 'red', $space: rgb)}, #{color.channel($brand, 'green', $space: rgb)},
-    #{color.channel($brand, 'blue', $space: rgb)};
-
-  --on-brand-color: #{$on-brand};
-
-  --line-color: #{$line};
-
-  // Base Brand Mapping
-  --ink: #{$text};
-  --cream: #{$bg};
-  --hot: #ff3d5a;
-  --lime: #c8e84f;
-  --line-color-rgb:
-    #{color.channel($line, 'red', $space: rgb)}, #{color.channel($line, 'green', $space: rgb)},
-    #{color.channel($line, 'blue', $space: rgb)};
-
-  --faded-ink: rgba(
-    #{color.channel($text, 'red', $space: rgb)},
-    #{color.channel($text, 'green', $space: rgb)},
-    #{color.channel($text, 'blue', $space: rgb)},
-    0.05
-  );
-}
-
-// --- Global Theme Application ---
-
-// Default (Light Mode)
-:root,
-body:not(.dark-theme) {
-  @include theme-properties(
-    #f5f1e8,
-    // bg
-    #fff6e6,
-    // card
-    #141310,
-    // text
-    #ff3d5a,
-    // brand
-    #1a1a1a,
-    // line
-    #ffffff,
-    // on-brand
-    null
-  );
-  --cream-2: #ece5d3;
-  --cream-3: #e0d7c0;
-  --ink-2: #3a3630;
-  --ink-mute: #6b635a;
-  --sun: #ffc93c;
-  --lime: #c8e84f;
-  --hot: #ff3d5a;
-
-  // Additional section backgrounds
   --inverse: var(--ink);
   --inverse-fg: var(--cream);
-  --player-bg: var(--ink);
-  --player-fg: var(--cream);
-}
-
-// Dark Mode (from Waveyard-beat-dark reference)
-body.dark-theme {
-  @include theme-properties(
-    #0e0d0b,
-    // bg (--cream)
-    #1a1814,
-    // card (--cream-2)
-    #f0e9d6,
-    // text (--ink)
-    #ff4d68,
-    // brand (--hot)
-    #f0e9d6,
-    // line (using ink for lines)
-    #0e0d0b,
-    // on-brand (cream on hot background)
-    null,
-    screen,
-    // noise-blend
-    0.08 // noise-opacity
-  );
-
-  // Additional explicit variable overrides if needed
-  --cream-2: #1a1814;
-  --cream-3: #26241e;
-  --ink-2: #c4bdab;
-  --ink-mute: #8a8373;
-  --hot: #ff4d68;
-  --lime: #d9f561;
-  --sun: #ffd859;
-
-  // Additional section backgrounds
-  --inverse: #f0e9d6;
-  --inverse-fg: #0e0d0b;
   --player-bg: #050402;
-  --player-fg: #f0e9d6;
-}
-
-// --- Scoped Preview Classes ---
-// Used for the Settings "Mini App" preview
-.theme-preview-light {
-  @include theme-properties(#f5f1e8, #fff6e6, #141310, #ff3d5a, #1a1a1a, #ffffff, null);
-  --cream-2: #ece5d3;
-  --cream-3: #e0d7c0;
-  --ink-2: #3a3630;
-  --ink-mute: #6b635a;
-  --sun: #ffc93c;
-  --lime: #c8e84f;
-  --hot: #ff3d5a;
-}
-
-.theme-preview-dark {
-  @include theme-properties(#0e0d0b, #1a1814, #f0e9d6, #ff4d68, #f0e9d6, #0e0d0b, null, normal, 0);
-  --cream-2: #1a1814;
-  --cream-3: #26241e;
-  --ink-2: #c4bdab;
-  --ink-mute: #8a8373;
-  --hot: #ff4d68;
-  --lime: #d9f561;
-  --sun: #ffd859;
+  --player-fg: var(--ink);
 }

@@ -50,11 +50,11 @@ export class SidebarComponent {
       {
         title: 'Beats',
         links: [
-          { label: 'Explore', icon: 'fa-compass', route: '/discover' },
-          { label: 'All beats', icon: 'fa-music', route: '/explore' },
+          { label: 'Explore', icon: 'fa-location-arrow', route: '/discover' },
+          { label: 'All beats', icon: 'fa-record-vinyl', route: '/explore' },
           {
             label: 'New releases',
-            icon: 'fa-bolt',
+            icon: 'fa-star',
             route: '/discover',
             query: { section: 'new_releases' },
           },
@@ -63,10 +63,10 @@ export class SidebarComponent {
       {
         title: 'My library',
         links: [
-          { label: 'Cart', icon: 'fa-cart-shopping', route: '/cart', badge: this.cart.count() },
+          { label: 'Cart', icon: 'fa-basket-shopping', route: '/cart', badge: this.cart.count() },
           {
             label: 'Purchases',
-            icon: 'fa-bag-shopping',
+            icon: 'fa-receipt',
             route: user ? '/studio/purchases' : '/login',
           },
         ],
@@ -76,8 +76,8 @@ export class SidebarComponent {
       groups.push({
         title: 'Sell beats',
         links: [
-          { label: 'Upload', icon: 'fa-cloud-arrow-up', route: '/upload' },
-          { label: 'Studio', icon: 'fa-sliders', route: '/studio/overview' },
+          { label: 'Upload', icon: 'fa-upload', route: '/upload' },
+          { label: 'Studio', icon: 'fa-table-columns', route: '/studio/overview' },
         ],
       });
     }
@@ -85,8 +85,8 @@ export class SidebarComponent {
   });
 
   readonly footerLinks: SidebarLink[] = [
-    { label: 'Licensing', icon: 'fa-file-contract', route: '/licensing' },
-    { label: 'Terms', icon: 'fa-scale-balanced', route: '/terms' },
+    { label: 'Licensing', icon: 'fa-file-lines', route: '/licensing' },
+    { label: 'Terms', icon: 'fa-landmark', route: '/terms' },
   ];
 
   isActive(link: SidebarLink): boolean {

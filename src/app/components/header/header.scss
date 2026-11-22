@@ -1,5 +1,6 @@
 @use '../../styles/variables' as *;
 @use '../../styles/navbar-popover' as popover;
+@use '../../styles/scrollbar';
 
 :host {
   --nb-line: color-mix(in srgb, var(--ink) 10%, transparent);
@@ -487,8 +488,8 @@ nav.fixed-navbar {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  scrollbar-width: thin;
   padding-inline: 6px;
+  @include scrollbar.slim;
 }
 
 .notif-item {

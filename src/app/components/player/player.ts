@@ -20,13 +20,14 @@ import { LabService } from '../../services/lab';
 import { PlayerService } from '../../services/player.service';
 import { PurchaseDialogService } from '../../services/purchase-dialog.service';
 import { ToastService } from '../../services/toast.service';
+import { BeatPriceComponent } from '../../shared/components/offer-price/offer-price.component';
 import { producerLink } from '../../utils/producer-link';
 import { FlameWrapEffectComponent } from '../ui/flame-wrap-effect.component';
 
 @Component({
   selector: 'app-player',
   standalone: true,
-  imports: [CommonModule, RouterLink, FlameWrapEffectComponent],
+  imports: [CommonModule, RouterLink, FlameWrapEffectComponent, BeatPriceComponent],
   templateUrl: './player.html',
   styleUrls: ['./player.scss'],
 })
@@ -108,6 +109,11 @@ export class PlayerComponent implements OnDestroy {
       return nextAmount < minAmount ? license : min;
     }, track.licenses[0]);
     return this.currencyService.formatMoney(cheapest.displayPriceMoney, cheapest.price);
+  });
+
+  readonly promotedTrack = computed(() => {
+    const track = this.expandedTrackDetail() ?? this.playerService.currentTrack();
+    return track?.promotion ? track : null;
   });
 
   private lastVisibleState = false;

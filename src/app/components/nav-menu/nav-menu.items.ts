@@ -78,6 +78,14 @@ export const STUDIO_ITEMS: readonly NavMenuItem[] = [
     producerOnly: true,
   },
   {
+    label: 'Promotions',
+    description: 'Coupons for your beats',
+    icon: 'fa-tags',
+    route: '/studio/promotions',
+    tint: 'lavender',
+    producerOnly: true,
+  },
+  {
     label: 'Orders',
     description: 'Incoming sales',
     icon: 'fa-bag-shopping',

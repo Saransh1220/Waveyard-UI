@@ -1,33 +1,18 @@
-import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ThemeService } from '../../../services/theme.service';
-import { ToastService } from '../../../services/toast.service';
 import { AppearanceSettingsComponent } from './appearance-settings.component';
 
 describe('AppearanceSettingsComponent', () => {
-  const setMode = vi.fn();
-  const show = vi.fn();
+  it('shows a read-only preview of Waveyard’s dark appearance', async () => {
+    await TestBed.configureTestingModule({
+      imports: [AppearanceSettingsComponent],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(AppearanceSettingsComponent);
+    fixture.detectChanges();
 
-  it('reads and applies light or dark mode', () => {
-    const currentMode = signal<'light' | 'dark'>('dark');
-    TestBed.configureTestingModule({
-      providers: [
-        {
-          provide: ThemeService,
-          useValue: {
-            currentMode,
-            setMode,
-          },
-        },
-        { provide: ToastService, useValue: { show } },
-      ],
-    });
-
-    const component = TestBed.runInInjectionContext(() => new AppearanceSettingsComponent());
-    expect(component.currentMode).toBe('dark');
-
-    component.setMode('light');
-    expect(setMode).toHaveBeenCalledWith('light');
-    expect(show).toHaveBeenCalledWith('Switched to light mode', 'success');
+    const appearance: HTMLElement = fixture.nativeElement;
+    expect(appearance.querySelector('h1')?.textContent).toBe('Appearance');
+    expect(appearance.textContent).toContain('Waveyard uses a dark appearance.');
+    expect(appearance.querySelector('.mockup-window')).not.toBeNull();
+    expect(appearance.querySelector('button, input, select')).toBeNull();
   });
 });

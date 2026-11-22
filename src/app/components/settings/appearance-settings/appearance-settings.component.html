@@ -2,18 +2,13 @@
   <header class="page-header">
     <div class="header-content">
       <h1>Appearance</h1>
-      <p>Customize your workspace theme.</p>
+      <p>Waveyard uses a dark appearance.</p>
     </div>
   </header>
 
-  <!-- LIVE PREVIEW STAGE -->
-  <div class="preview-stage-wrapper">
+  <div class="preview-stage-wrapper" aria-hidden="true">
     <!-- The "Window" Mockup -->
-    <div
-      class="mockup-window"
-      [class.theme-preview-light]="currentMode === 'light'"
-      [class.theme-preview-dark]="currentMode === 'dark'"
-    >
+    <div class="mockup-window">
       <!-- Mockup Background (Global Theme Bg) -->
       <div class="mockup-bg"></div>
 
@@ -35,7 +30,7 @@
           <!-- Hero Section (Compacted) -->
           <div class="mini-hero-section">
             <div class="mini-welcome">Welcome back</div>
-            <h1 class="mini-title">Find Your <span class="highlight">Sound</span></h1>
+            <div class="mini-title">Find Your <span class="highlight">Sound</span></div>
 
             <!-- Compact Search -->
             <div class="mini-search-bar">
@@ -73,30 +68,6 @@
               </div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="themes-list">
-    <h3>Mode</h3>
-    <div class="grid">
-      <div
-        class="theme-item glass-panel"
-        [class.active]="currentMode === 'light'"
-        (click)="setMode('light')"
-      >
-        <div class="details">
-          <span class="name">Light Mode</span>
-        </div>
-      </div>
-      <div
-        class="theme-item glass-panel"
-        [class.active]="currentMode === 'dark'"
-        (click)="setMode('dark')"
-      >
-        <div class="details">
-          <span class="name">Dark Mode</span>
         </div>
       </div>
     </div>

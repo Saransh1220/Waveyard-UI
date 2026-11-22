@@ -12,6 +12,7 @@ import {
   VerifyPaymentRequest,
 } from '../core/api/payment.requests';
 import { ApiService } from '../core/services/api.service';
+import type { CheckoutQuote } from '../models/payment';
 import { AuthService } from './auth.service';
 import { PaymentService } from './payment.service';
 import { ToastService } from './toast.service';
@@ -350,9 +351,157 @@ describe('PaymentService', () => {
 
     service.initiatePayment('spec-1', 'lo-1', 'Track').subscribe({ error: () => undefined });
     expect(show).toHaveBeenCalledWith(
-      expect.stringContaining('different details was already initiated'),
+      expect.stringContaining('different details already exists'),
       'error',
     );
+  });
+
+  it('resumes a pre-quote checkout using the saved key and opens it at its original amount', () => {
+    const key = crypto.randomUUID();
+    const storageKey = 'waveyard_checkout_intent_guest_legacy-spec_wav';
+    sessionStorage.setItem(storageKey, key);
+    const original = {
+      id: 'original-order',
+      status: 'pending',
+      amount: 1000,
+      currency: 'INR',
+      razorpay_order_id: 'original-razorpay-order',
+    };
+    const execute = vi.fn().mockReturnValue(of(original));
+    const { service } = setup(execute);
+    const open = vi
+      .spyOn(service as any, 'openRazorpayCheckout')
+      .mockImplementation(() => undefined);
+    expect(service.hasLegacyCheckout('legacy-spec', 'wav')).toBe(true);
+    service.initiatePayment('legacy-spec', 'wav', 'Track', { resumeLegacy: true }).subscribe();
+    expect(execute).toHaveBeenCalledTimes(1);
+    const request = execute.mock.calls[0][0] as CreateOrderRequest;
+    expect(request.headers?.['Idempotency-Key']).toBe(key);
+    expect(request.body).toEqual({
+      spec_id: 'legacy-spec',
+      license_option_id: 'wav',
+      resume_only: true,
+    });
+    expect(open).toHaveBeenCalledExactlyOnceWith(original, 'Track');
+    expect(sessionStorage.getItem(storageKey)).toBe(key);
+    sessionStorage.removeItem(storageKey);
+  });
+
+  it('keeps the same key if a legacy reservation appears while confirming a new quote', () => {
+    const key = crypto.randomUUID();
+    const storageKey = 'waveyard_checkout_intent_guest_unreserved-spec_wav';
+    sessionStorage.setItem(storageKey, key);
+    const execute = vi
+      .fn()
+      .mockReturnValueOnce(
+        throwError(() => ({ status: 404, error: { code: 'CHECKOUT_NOT_FOUND' } })),
+      )
+      .mockReturnValueOnce(throwError(() => ({ status: 409, error: { code: 'PRICE_CHANGED' } })))
+      .mockReturnValueOnce(
+        throwError(() => ({ status: 409, error: { code: 'IDEMPOTENCY_CONFLICT' } })),
+      )
+      .mockReturnValueOnce(of({ id: 'existing-order', status: 'cancelled' }));
+    const { service } = setup(execute);
+    const quote: CheckoutQuote = {
+      quote_id: 'current',
+      spec_id: 'unreserved-spec',
+      license_option_id: 'wav',
+      requested_currency: 'USD',
+      offer: {
+        price_id: 'price',
+        revision: 1,
+        amount_minor: 1000,
+        amount_major: 10,
+        currency: 'USD',
+        selection: 'exact',
+        is_purchasable: true,
+        available_currencies: ['USD'],
+      },
+      discount_minor: 250,
+      payable_minor: 750,
+    };
+    const resume = () =>
+      service
+        .initiatePayment('unreserved-spec', 'wav', 'Track', { resumeLegacy: true })
+        .subscribe();
+    resume();
+    expect(service.hasLegacyCheckout('unreserved-spec', 'wav')).toBe(false);
+    const priceChanged = vi.fn();
+    service
+      .initiatePayment('unreserved-spec', 'wav', 'Track', { quote })
+      .subscribe({ error: priceChanged });
+    expect(priceChanged).toHaveBeenCalledTimes(1);
+    expect(service.hasLegacyCheckout('unreserved-spec', 'wav')).toBe(false);
+    const updated = { ...quote, quote_id: 'updated', discount_minor: 0, payable_minor: 1000 };
+    service.initiatePayment('unreserved-spec', 'wav', 'Track', { quote: updated }).subscribe();
+    expect(service.hasLegacyCheckout('unreserved-spec', 'wav')).toBe(true);
+    resume();
+    const requests = execute.mock.calls.map(([request]) => request as CreateOrderRequest);
+    expect(requests.map((request) => request.headers?.['Idempotency-Key'])).toEqual([
+      key,
+      key,
+      key,
+      key,
+    ]);
+    expect(requests.map((request) => request.body.resume_only)).toEqual([
+      true,
+      undefined,
+      undefined,
+      true,
+    ]);
+    expect(requests[1].body.quote_id).toBe('current');
+    expect(requests[2].body.quote_id).toBe('updated');
+    expect(sessionStorage.getItem(storageKey)).toBeNull();
+    expect(service.hasLegacyCheckout('unreserved-spec', 'wav')).toBe(false);
+  });
+
+  it('retries the exact accepted quote and resets the intent only for a rejected price', () => {
+    const execute = vi
+      .fn()
+      .mockReturnValueOnce(of({ code: 'CHECKOUT_IN_FLIGHT', retry_after: 2 }))
+      .mockReturnValueOnce(throwError(() => ({ status: 409, error: { code: 'PRICE_CHANGED' } })))
+      .mockReturnValueOnce(of({ id: 'new-order', status: 'pending' }));
+    const { service } = setup(execute);
+    const quote: CheckoutQuote = {
+      quote_id: 'original',
+      spec_id: 'coupon-spec',
+      license_option_id: 'wav',
+      requested_currency: 'USD',
+      offer: {
+        price_id: 'price-1',
+        revision: 1,
+        amount_minor: 2000,
+        amount_major: 20,
+        currency: 'INR',
+        selection: 'native_fallback',
+        is_purchasable: true,
+        available_currencies: ['INR'],
+      },
+      discount_minor: 500,
+      payable_minor: 1500,
+    };
+    const revised = { ...quote, quote_id: 'revised', discount_minor: 0, payable_minor: 2000 };
+    const buy = (accepted: CheckoutQuote) =>
+      service.initiatePayment(quote.spec_id, 'wav', 'Track', { quote: accepted }).subscribe({
+        error: () => undefined,
+      });
+    buy(quote);
+    expect(service.resumeQuote(quote.spec_id, 'wav')).toEqual(quote);
+    buy(revised);
+    expect(execute).toHaveBeenCalledTimes(1);
+    buy(quote);
+    const [first, retry] = execute.mock.calls.map(([request]) => request as CreateOrderRequest);
+    expect(retry.headers).toEqual(first.headers);
+    expect(retry.body).toEqual(first.body);
+    expect(first.body).toMatchObject({
+      currency: 'USD',
+      expected_currency: 'INR',
+      expected_amount_minor: 2000,
+      quote_id: 'original',
+    });
+    expect(service.resumeQuote(quote.spec_id, 'wav')).toBeUndefined();
+    buy(revised);
+    expect(execute.mock.calls[2][0].headers).not.toEqual(first.headers);
   });
 
   it('refundOrder executes CreateRefundRequest and returns response', () => {
