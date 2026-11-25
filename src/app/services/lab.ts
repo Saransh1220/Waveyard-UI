@@ -51,6 +51,8 @@ export interface HomepageData {
   sections: Record<string, HomepageSection>;
 }
 
+const CATALOG_CACHE_MS = 30_000;
+
 @Injectable({
   providedIn: 'root',
 })
@@ -65,7 +67,7 @@ export class LabService {
   private specsCacheViewer = this.sessionState.currentUserId();
   private specsCacheGeneration = this.sessionState.generation();
   private specsCacheCurrency = this.buyerCurrency.effective();
-  private specsCache = new Map<string, Observable<Spec[]>>();
+  private specsCache = new Map<string, { request: Observable<Spec[]>; expiresAt: number }>();
 
   specsPagination = signal<PaginationMetadata | null>(null);
 
@@ -104,7 +106,7 @@ export class LabService {
 
     const cacheKey = this.specsCacheKey(filters);
     const cached = this.specsCache.get(cacheKey);
-    if (cached) return cached;
+    if (cached && cached.expiresAt > Date.now()) return cached.request;
 
     const request$ = this.api.execute(new GetSpecsRequest(filters)).pipe(
       map((response: any) => {
@@ -129,7 +131,7 @@ export class LabService {
       }),
       map(({ specs }) => specs),
     );
-    this.specsCache.set(cacheKey, request$);
+    this.specsCache.set(cacheKey, { request: request$, expiresAt: Date.now() + CATALOG_CACHE_MS });
     return request$;
   }
 

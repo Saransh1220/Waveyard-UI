@@ -15,12 +15,15 @@ import { Subscription } from 'rxjs';
 
 import type { Spec } from '../../models';
 import { SpecActionService } from '../../services/spec-action.service';
-import { MoneyPipe } from '../../shared/pipes/money.pipe';
+import {
+  BeatPriceComponent,
+  SaleBadgeComponent,
+} from '../../shared/components/offer-price/offer-price.component';
 import { producerLink } from '../../utils/producer-link';
 
 @Component({
   selector: 'app-spec-list-item',
-  imports: [CommonModule, NgOptimizedImage, RouterLink, MoneyPipe],
+  imports: [CommonModule, NgOptimizedImage, RouterLink, BeatPriceComponent, SaleBadgeComponent],
   templateUrl: './spec-list-item.component.html',
   styleUrls: ['./spec-list-item.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

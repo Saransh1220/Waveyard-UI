@@ -29,10 +29,11 @@ export class SpecActionService {
     }
   }
 
-  addToCart(event: Event, spec: Spec) {
+  addToCart(event: Event, spec: Spec, optionId?: string) {
     event.stopPropagation();
     this.authService.requireAuth(() => {
-      this.purchaseDialog.open(spec);
+      if (optionId) this.purchaseDialog.open(spec, optionId);
+      else this.purchaseDialog.open(spec);
     });
   }
 

@@ -1,0 +1,28 @@
+:host {
+  display: inline-flex;
+  inline-size: max-content;
+  max-inline-size: 100%;
+}
+
+button {
+  display: grid;
+  place-items: center;
+  inline-size: 44px;
+  block-size: 44px;
+  padding: 0;
+  border: 1px solid #6c5e51;
+  border-radius: 50%;
+  background: transparent;
+  color: #fff4e4;
+  font-size: 16px;
+  cursor: pointer;
+
+  &:hover {
+    border-color: #ac9580;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #fff4e4;
+    outline-offset: -4px;
+  }
+}

@@ -1,0 +1,156 @@
+<section aria-label="Your coupons">
+  @if (w.coupons().length) {
+    <table class="pw-table">
+      <thead>
+        <tr>
+          <th scope="col">Coupon</th>
+          <th scope="col">Discount</th>
+          <th scope="col">Coverage</th>
+          <th scope="col">Status</th>
+          <th scope="col"><span class="pw-sr">Actions</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (coupon of w.coupons(); track coupon.id) {
+          <tr>
+            <th scope="row" class="pw-coupon-name">
+              <strong>{{ coupon.rules.name }}</strong>
+              @if (coupon.rules.starts_at || coupon.rules.ends_at) {
+                <span class="pw-meta pw-coupon-window">
+                  @if (coupon.rules.starts_at) {
+                    <span>From {{ coupon.rules.starts_at | date: 'MMM d, y, h:mm a' }}</span>
+                  }
+                  @if (coupon.rules.ends_at) {
+                    <span>Until {{ coupon.rules.ends_at | date: 'MMM d, y, h:mm a' }}</span>
+                  }
+                </span>
+              }
+            </th>
+            <td>
+              <span class="pw-discount">{{ w.describeDiscount(coupon) }}</span>
+            </td>
+            <td>
+              <strong
+                >{{ coupon.rules.enrollments.length }}
+                {{ coupon.rules.enrollments.length === 1 ? 'beat' : 'beats' }}</strong
+              >
+              <span class="pw-meta">{{ coupon.rules.currencies.join(' · ') }}</span>
+            </td>
+            <td class="pw-status-cell">
+              @let status = w.describeState(coupon);
+              <span class="pw-status" [attr.data-status]="status">{{ status }}</span>
+            </td>
+            <td class="pw-actions-cell">
+              @if (coupon.state !== 'archived') {
+                <div class="pw-actions pw-row-actions">
+                  <button
+                    type="button"
+                    class="pw-button pw-enroll-action"
+                    (click)="w.openEnrollment(coupon)"
+                    [disabled]="w.busy() || !!w.confirmation()"
+                  >
+                    <i class="fa-solid fa-list-check" aria-hidden="true"></i> Enroll beats
+                  </button>
+                  @if (coupon.state !== 'published') {
+                    <button
+                      type="button"
+                      class="pw-button pw-primary pw-publish-action"
+                      (click)="w.askAction(coupon, 'publish')"
+                      [disabled]="
+                        w.busy() || !!w.confirmation() || !coupon.rules.enrollments.length
+                      "
+                      [attr.title]="
+                        coupon.rules.enrollments.length
+                          ? null
+                          : 'Enroll at least one beat to publish'
+                      "
+                    >
+                      {{ coupon.published_revision ? 'Publish changes' : 'Publish' }}
+                    </button>
+                  }
+                  <details
+                    promotionDisclosure
+                    #menu="promotionDisclosure"
+                    name="promotion-actions"
+                    class="pw-menu"
+                  >
+                    <summary
+                      class="pw-menu-trigger"
+                      [attr.aria-label]="'Actions for ' + coupon.rules.name"
+                    >
+                      <i class="fa-solid fa-ellipsis-vertical" aria-hidden="true"></i>
+                    </summary>
+                    <div class="pw-popup pw-menu-items">
+                      <button
+                        type="button"
+                        (click)="menu.close(true); w.openForm(coupon)"
+                        [disabled]="w.busy() || !!w.confirmation()"
+                      >
+                        <i class="fa-solid fa-pen" aria-hidden="true"></i> Edit coupon
+                      </button>
+                      <button
+                        type="button"
+                        (click)="menu.close(true); w.openPreview(coupon)"
+                        [disabled]="w.busy() || !!w.confirmation()"
+                      >
+                        <i class="fa-solid fa-eye" aria-hidden="true"></i> Preview eligibility
+                      </button>
+                      @if (coupon.published_revision) {
+                        <button
+                          type="button"
+                          (click)="menu.close(true); w.askAction(coupon, 'pause')"
+                          [disabled]="w.busy() || !!w.confirmation()"
+                        >
+                          <i class="fa-solid fa-pause" aria-hidden="true"></i> Pause
+                        </button>
+                      }
+                      <button
+                        type="button"
+                        class="pw-danger"
+                        (click)="menu.close(true); w.askAction(coupon, 'archive')"
+                        [disabled]="w.busy() || !!w.confirmation()"
+                      >
+                        <i class="fa-solid fa-box-archive" aria-hidden="true"></i> Archive
+                      </button>
+                    </div>
+                  </details>
+                </div>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  } @else if (!w.busy() && !w.loadFailed()) {
+    <div class="pw-empty">
+      <h3>No coupons yet</h3>
+      <p>Create a coupon to offer a discount on selected beats.</p>
+      <button class="pw-button" type="button" (click)="w.openForm(null)">Create coupon</button>
+    </div>
+  }
+  @if (w.loadFailed() && !w.conflict()) {
+    <button type="button" class="pw-button" (click)="w.loadPage(w.offset())" [disabled]="w.busy()">
+      Retry loading coupons
+    </button>
+  }
+  @if (w.offset() || w.hasNext()) {
+    <nav class="pw-pagination" aria-label="Coupon pages">
+      <button
+        class="pw-button"
+        type="button"
+        (click)="w.movePage(-1)"
+        [disabled]="!w.offset() || w.busy()"
+      >
+        Previous
+      </button>
+      <button
+        class="pw-button"
+        type="button"
+        (click)="w.movePage(1)"
+        [disabled]="!w.hasNext() || w.busy()"
+      >
+        Next
+      </button>
+    </nav>
+  }
+</section>

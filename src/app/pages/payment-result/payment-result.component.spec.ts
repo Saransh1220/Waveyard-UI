@@ -145,6 +145,33 @@ describe('PaymentResultComponent', () => {
     expect(page.querySelector('.file-list a')?.hasAttribute('target')).toBe(false);
   });
 
+  it('shows captured total and saved coupon amount after payment', () => {
+    setupComponent({ order_id: validOrderId });
+    mockPaymentService.pollOrderStatus.mockReturnValue(
+      of({
+        order_id: validOrderId,
+        status: 'paid',
+        provider: 'dodo',
+        expires_at: '2026-11-07T20:00:00Z',
+        retry_after_seconds: 0,
+      } as OrderStatusDto),
+    );
+    mockPaymentService.getOrder.mockReturnValue(
+      of({
+        status: 'paid',
+        currency: 'USD',
+        amount: 750,
+        captured_amount_minor: 825,
+        notes: { pricing_snapshot: { discount_minor: 250 } },
+      }),
+    );
+
+    fixture.detectChanges();
+    expect(component.paidTotal()).toBe('$8.25');
+    expect(component.couponSavings()).toBe('$2.50');
+    expect(fixture.nativeElement.textContent).toContain('Coupon savings');
+  });
+
   it('transitions to failed state when status is failed or cancelled or refunded', () => {
     setupComponent({ order_id: validOrderId });
     mockPaymentService.pollOrderStatus.mockReturnValue(

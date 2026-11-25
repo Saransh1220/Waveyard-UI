@@ -1,9 +1,11 @@
 import '../../../test-setup';
 import { signal } from '@angular/core';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { EMPTY, of, Subject, throwError } from 'rxjs';
 
 import type { LicenseOption, Spec } from '../../models';
+import type { CheckoutQuote } from '../../models/payment';
+import { BuyerCurrencyService } from '../../services/buyer-currency.service';
 import { CartService } from '../../services/cart.service';
 import { PaymentService } from '../../services/payment.service';
 import { PlayerService } from '../../services/player.service';
@@ -37,6 +39,25 @@ const makeSpec = (extra: Partial<Spec> = {}): Spec =>
     licenses: [license('l1', 'Basic'), license('l2', 'Premium'), license('l3', 'Unlimited')],
     ...extra,
   }) as Spec;
+
+const makeQuote = (specId: string, optionId: string, discount = 0): CheckoutQuote => ({
+  quote_id: 'quote-' + discount,
+  spec_id: specId,
+  license_option_id: optionId,
+  requested_currency: 'INR',
+  offer: {
+    price_id: 'price-1',
+    revision: 1,
+    amount_minor: 2000,
+    amount_major: 20,
+    currency: 'INR',
+    selection: 'exact',
+    is_purchasable: true,
+    available_currencies: ['INR'],
+  },
+  discount_minor: discount,
+  payable_minor: 2000 - discount,
+});
 
 describe('license display helpers', () => {
   const lic = (type: string, extra: Partial<LicenseOption> = {}) => license('x', type, extra);
@@ -81,6 +102,9 @@ describe('PurchaseWarpComponent', () => {
   const addItem = vi.fn();
   const show = vi.fn();
   const initiatePayment = vi.fn();
+  const getCheckoutQuote = vi.fn();
+  const resumeQuote = vi.fn();
+  const hasLegacyCheckout = vi.fn();
   const currentTrack = signal<Spec | null>(null);
   const isPlaying = signal(false);
   const player = { currentTrack, isPlaying, togglePlay: vi.fn(), showPlayer: vi.fn() };
@@ -100,13 +124,22 @@ describe('PurchaseWarpComponent', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     initiatePayment.mockReturnValue(of(undefined));
+    getCheckoutQuote
+      .mockReset()
+      .mockImplementation((specId, optionId) => of(makeQuote(specId, optionId)));
+    resumeQuote.mockReset();
+    hasLegacyCheckout.mockReset().mockReturnValue(false);
     currentTrack.set(null);
     isPlaying.set(false);
     TestBed.configureTestingModule({
       providers: [
         { provide: CartService, useValue: { addItem } },
         { provide: ToastService, useValue: { show } },
-        { provide: PaymentService, useValue: { initiatePayment } },
+        {
+          provide: PaymentService,
+          useValue: { initiatePayment, getCheckoutQuote, resumeQuote, hasLegacyCheckout },
+        },
+        { provide: BuyerCurrencyService, useValue: { effective: signal('INR') } },
         { provide: PlayerService, useValue: player },
       ],
     });
@@ -197,16 +230,110 @@ describe('PurchaseWarpComponent', () => {
   it('buys the chosen license now and closes', () => {
     openWith(makeSpec());
     button('Buy now').click();
-    expect(initiatePayment).toHaveBeenCalledWith('beat-1', 'l2', 'Night Drive');
+    expect(initiatePayment).toHaveBeenCalledWith('beat-1', 'l2', 'Night Drive', {
+      quote: makeQuote('beat-1', 'l2'),
+    });
     expect(dialog.spec()).toBeNull();
   });
 
-  it('logs a failed payment start', () => {
-    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+  it('offers to resume the original quote after an uncertain payment start', () => {
+    const saved = makeQuote('beat-1', 'l2', 500);
+    getCheckoutQuote.mockReturnValue(of(saved));
     initiatePayment.mockReturnValue(throwError(() => new Error('down')));
     openWith(makeSpec());
+    resumeQuote.mockReturnValue(saved);
     button('Buy now').click();
-    expect(error).toHaveBeenCalled();
+    fixture.detectChanges();
+    expect(button('Resume checkout').disabled).toBe(false);
+    expect(el.querySelector('.pw-foot .sale')?.textContent).toContain('₹5 off');
+  });
+
+  it('keeps a new discount visible when a full-price checkout was saved earlier', () => {
+    const earlier = makeQuote('beat-1', 'l2');
+    const current = { ...makeQuote('beat-1', 'l2', 500), discount_percent_bps: 2500 };
+    resumeQuote.mockReturnValue(earlier);
+    getCheckoutQuote.mockReturnValue(of(current));
+    openWith(makeSpec());
+    expect(getCheckoutQuote).toHaveBeenCalledWith('beat-1', 'l2', 'INR');
+    expect(el.querySelector('.pw-foot .sale')?.textContent).toContain('25% off');
+    expect(footer()[1]).toContain('₹15');
+    expect(el.querySelector('.pw-previous')?.textContent).toContain('Earlier checkout · ₹20');
+    expect(button('Buy now').disabled).toBe(true);
+    component.buyNow();
+    expect(initiatePayment).not.toHaveBeenCalled();
+    el.querySelector<HTMLButtonElement>('.pw-previous button')!.click();
+    expect(initiatePayment).toHaveBeenCalledWith('beat-1', 'l2', 'Night Drive', {
+      quote: earlier,
+      resuming: true,
+    });
+  });
+
+  it('offers the current discount after the earlier checkout closes', () => {
+    const earlier = makeQuote('beat-1', 'l2');
+    const current = makeQuote('beat-1', 'l2', 500);
+    resumeQuote.mockReturnValue(earlier);
+    getCheckoutQuote.mockReturnValue(of(current));
+    initiatePayment.mockImplementationOnce(() => {
+      resumeQuote.mockReturnValue(undefined);
+      return EMPTY;
+    });
+    openWith(makeSpec());
+    el.querySelector<HTMLButtonElement>('.pw-previous button')!.click();
+    fixture.detectChanges();
+    expect(el.querySelector('.pw-previous')).toBeNull();
+    expect(button('Buy now').disabled).toBe(false);
+    button('Buy now').click();
+    expect(initiatePayment).toHaveBeenLastCalledWith('beat-1', 'l2', 'Night Drive', {
+      quote: current,
+    });
+  });
+
+  it('separates legacy checkout recovery from the current discounted purchase', () => {
+    const current = makeQuote('beat-1', 'l2', 500);
+    hasLegacyCheckout.mockReturnValue(true);
+    getCheckoutQuote.mockReturnValue(of(current));
+    initiatePayment.mockImplementationOnce(() => {
+      hasLegacyCheckout.mockReturnValue(false);
+      return EMPTY;
+    });
+    openWith(makeSpec());
+    expect(footer()[1]).toContain('₹15');
+    expect(button('Buy now').disabled).toBe(true);
+    expect(el.querySelector('.pw-previous')?.textContent).toContain('Review the original amount');
+    el.querySelector<HTMLButtonElement>('.pw-previous button')!.click();
+    expect(initiatePayment).toHaveBeenCalledExactlyOnceWith('beat-1', 'l2', 'Night Drive', {
+      resumeLegacy: true,
+    });
+    fixture.detectChanges();
+    expect(button('Buy now').disabled).toBe(false);
+    button('Buy now').click();
+    expect(initiatePayment).toHaveBeenLastCalledWith('beat-1', 'l2', 'Night Drive', {
+      quote: current,
+    });
+  });
+
+  it('waits for a quote and requires a second confirmation when a coupon changes', () => {
+    const pending = new Subject<CheckoutQuote>();
+    const saved = { ...makeQuote('beat-1', 'l2', 500), discount_percent_bps: 2500 };
+    const updated = makeQuote('beat-1', 'l2');
+    getCheckoutQuote.mockReturnValueOnce(pending).mockReturnValueOnce(of(updated));
+    initiatePayment.mockReturnValueOnce(throwError(() => ({ error: { code: 'PRICE_CHANGED' } })));
+    openWith(makeSpec());
+    expect(button('Buy now').disabled).toBe(true);
+    pending.next(saved);
+    fixture.detectChanges();
+    expect(el.querySelector('.pw-foot s')?.textContent).toContain('₹20');
+    expect(el.querySelector('.pw-foot .sale')?.textContent).toContain('25% off');
+    expect(footer()[1]).toContain('₹15');
+    button('Buy now').click();
+    fixture.detectChanges();
+    expect(initiatePayment).toHaveBeenCalledTimes(1);
+    expect(el.querySelector('[role="alert"]')?.textContent).toContain('Review the updated amount');
+    expect(footer()[1]).toBe('₹20');
+    button('Buy now').click();
+    expect(initiatePayment).toHaveBeenLastCalledWith('beat-1', 'l2', 'Night Drive', {
+      quote: updated,
+    });
   });
 
   it('does nothing without a license to buy', () => {

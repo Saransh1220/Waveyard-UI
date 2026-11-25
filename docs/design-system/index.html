@@ -1,0 +1,871 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="The visual design reference and UI consistency audit for Redwave’s Waveyard app."
+    />
+    <title>Waveyard · UI Design System</title>
+    <link rel="icon" href="../../public/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=Geist:wght@200;300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="../../node_modules/@fortawesome/fontawesome-free/css/all.min.css"
+    />
+    <link rel="stylesheet" href="guide.css" />
+    <script src="reference.js" defer></script>
+    <script src="guide.js" defer></script>
+  </head>
+  <body>
+    <a href="#main" class="skip">Skip to guide</a>
+    <header class="mast" id="top">
+      <div class="wrap mast-inner">
+        <a class="wordmark" href="#top" aria-label="Waveyard design system home"
+          ><img src="../../public/logo-dark-cropped.webp" width="28" height="28" alt="" /><span
+            >Wave<em>yard</em></span
+          ></a
+        >
+        <span class="mast-label">Redwave UI reference</span>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero wrap" aria-labelledby="title">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="signal-dot"></span> Product design system</p>
+          <h1 id="title">The Waveyard<br /><em>design language.</em></h1>
+          <p class="intro">
+            A visual reference for building new screens, refining existing components, and keeping
+            the beat marketplace and creator workspace consistent.
+          </p>
+          <div class="actions">
+            <a class="button primary" href="#color">Explore the system</a
+            ><a class="button secondary" href="#audit">View the UI audit</a>
+          </div>
+        </div>
+        <figure class="hero-figure">
+          <div class="hero-art" aria-hidden="true">
+            <div class="art-grid"></div>
+            <div class="record"><div class="record-label"></div></div>
+            <div class="album">
+              <img
+                src="../../public/assets/images/genres/trap.webp"
+                alt=""
+                width="260"
+                height="260"
+              />
+            </div>
+          </div>
+          <figcaption>
+            <span>Near-black · warm cream · hot pink</span><span>Waveyard artwork</span>
+          </figcaption>
+        </figure>
+      </section>
+
+      <nav class="index" aria-label="Guide sections">
+        <div class="wrap index-inner">
+          <a href="#color">Color</a><a href="#type">Typography</a
+          ><a href="#icons">Icons &amp; identity</a><a href="#geometry">Geometry</a
+          ><a href="#components">Components</a><a href="#patterns">Screen patterns</a
+          ><a href="#audit">UI audit</a>
+        </div>
+      </nav>
+
+      <div class="wrap guide-body">
+        <section class="section" id="color" aria-labelledby="color-title">
+          <header class="section-head">
+            <h2 id="color-title">Color</h2>
+            <p>
+              Waveyard uses a dark UI. Use its shared color variables and scope tinted artwork, data
+              categories, and tool palettes to their own surfaces.
+            </p>
+          </header>
+          <div class="subhead">
+            <h3>Core palette</h3>
+            <span class="note">From the app · select a swatch to copy its hex</span>
+          </div>
+          <div class="swatch-grid" id="palette"></div>
+          <p class="note copy-status" role="status" id="copy-status"></p>
+          <details class="disclosure" open>
+            <summary>Shared color tokens</summary>
+            <div class="table-scroll" id="token-table"></div>
+            <p class="source">
+              Canvas, card, text, brand, and line also expose <code>-rgb</code> variants.
+              <code>--faded-ink</code> is primary text at 5% opacity.
+              <a href="../../src/app/styles/_theme.scss">Theme source</a>
+            </p>
+          </details>
+          <div class="pair-grid">
+            <article class="inset">
+              <h3>Text on accent</h3>
+              <div class="pairing"><b>Dark text</b><code id="contrast-value"></code></div>
+              <p>
+                Use <code>--on-brand-color</code> on pink button fills. Target at least 4.5:1 for
+                regular text and 3:1 for large text and meaningful control boundaries.
+              </p>
+            </article>
+            <article class="inset">
+              <h3>Status and data</h3>
+              <div class="actions">
+                <span class="badge success">Published</span
+                ><span class="badge warning">Processing</span
+                ><span class="badge danger">Failed</span><span class="badge neutral">Draft</span>
+              </div>
+              <p>
+                Proposed status mapping pairs color with a visible label. Give promotions and chart
+                series their own visual vocabulary.
+              </p>
+            </article>
+          </div>
+          <details class="disclosure">
+            <summary>Scoped palettes in the app</summary>
+            <div id="scoped-palettes" class="scoped-list"></div>
+          </details>
+        </section>
+
+        <section class="section" id="type" aria-labelledby="type-title">
+          <header class="section-head">
+            <h2 id="type-title">Typography</h2>
+            <p>
+              Use Bricolage Grotesque as the product voice, Instrument Serif for editorial emphasis,
+              and DM Mono for technical metadata.
+            </p>
+          </header>
+          <div class="type-roles">
+            <article class="inset">
+              <span class="eyebrow">UI &amp; display</span>
+              <div class="type-glyph brico" aria-hidden="true">Aa</div>
+              <h3>Bricolage Grotesque</h3>
+              <p>400, 600, 700, 800 · headings, body and actions</p>
+            </article>
+            <article class="inset">
+              <span class="eyebrow">Editorial accent</span>
+              <div class="type-glyph serif" aria-hidden="true">Aa</div>
+              <h3>Instrument Serif</h3>
+              <p>Regular and italic · short emphasis and display moments</p>
+            </article>
+            <article class="inset">
+              <span class="eyebrow">Metadata</span>
+              <div class="type-glyph mono" aria-hidden="true">Aa</div>
+              <h3>DM Mono</h3>
+              <p>400, 500 · BPM, key, tags and captions</p>
+            </article>
+          </div>
+          <div class="subhead">
+            <h3>Type scale</h3>
+            <span class="note">Proposed defaults for new product UI</span>
+          </div>
+          <div class="type-scale">
+            <div>
+              <code>Display · 40–92 / 0.95 · 800</code
+              ><span class="size-display">Find your <em>sound.</em></span>
+            </div>
+            <div>
+              <code>Page title · 32–48 / 1.05 · 800</code
+              ><span class="size-page">Explore beats</span>
+            </div>
+            <div>
+              <code>Section title · 24–32 / 1.1 · 700</code
+              ><span class="size-section">New releases</span>
+            </div>
+            <div>
+              <code>Component title · 18 / 1.2 · 700</code
+              ><span class="size-component">After Hours</span>
+            </div>
+            <div>
+              <code>Body · 14–16 / 1.4 · 400</code
+              ><span class="size-body">Pick a license that fits your next release.</span>
+            </div>
+            <div>
+              <code>Control · 14 / 1.3 · 700</code
+              ><span class="size-control">Choose a license</span>
+            </div>
+            <div>
+              <code>Metadata · 12 / 1.4 · 500</code
+              ><span class="size-meta">94 BPM · F MIN · TRAP</span>
+            </div>
+          </div>
+          <details class="disclosure">
+            <summary>Other typefaces in the checkout</summary>
+            <div class="type-alternates">
+              <div><span class="geist">Studio activity</span><small>Geist · 200–600</small></div>
+              <div>
+                <span class="geist-mono">1,284 PLAYS</span><small>Geist Mono · 400, 500</small>
+              </div>
+            </div>
+            <p class="source">
+              Geist and Geist Mono are loaded at entry and used by the legacy dashboard’s Bento
+              components. Admin uses system sans and receipt metadata uses system mono. The
+              preloader requests Space Mono. Creator Tools also has fonts for artwork exports.
+            </p>
+            <p class="source">
+              <a href="../../src/index.html">Loaded families</a> ·
+              <a href="../../src/app/components/bento/bento-page.component.ts">Bento fonts</a> ·
+              <a href="../../src/app/services/visualizer-fonts.ts">Export fonts</a>
+            </p>
+          </details>
+        </section>
+
+        <section class="section" id="icons" aria-labelledby="icon-title">
+          <header class="section-head">
+            <h2 id="icon-title">Icons &amp; identity</h2>
+            <p>
+              Use the installed Font Awesome Solid set for common actions. Match each symbol to one
+              action across cards, rows, navigation, and the player.
+            </p>
+          </header>
+          <div id="icon-grid" class="icon-grid" aria-label="Common Waveyard icons"></div>
+          <div class="pair-grid">
+            <article class="inset">
+              <h3>Icon sizing</h3>
+              <p>
+                <strong>Proposed sizes.</strong> Use 16px in text controls, 20px for standalone
+                actions, and 24px for prominent playback. Give touch actions a 44px target. Name
+                icon-only actions and show keyboard focus. Keep purpose-built brand, waveform, and
+                basket artwork where it serves the interface.
+              </p>
+              <p class="source">
+                <a href="../../angular.json">Bundled library</a> ·
+                <a href="../../src/app/components/header/header.html">Header icons</a> ·
+                <a href="../../src/app/components/hairline-basket/hairline-basket.ts"
+                  >Hairline basket</a
+                >
+              </p>
+            </article>
+            <article class="inset">
+              <h3>Use Waveyard in the product</h3>
+              <div class="logo-examples">
+                <div>
+                  <img
+                    src="../../public/logo-dark-cropped.webp"
+                    width="54"
+                    height="54"
+                    alt="Waveyard mark for the app’s dark surfaces"
+                  />
+                </div>
+                <div>
+                  <img
+                    src="../../public/Logo-cropped.webp"
+                    width="54"
+                    height="54"
+                    alt="Waveyard mark for light artwork"
+                  />
+                </div>
+              </div>
+              <p>
+                Use the dark-surface mark in app navigation. The alternate mark is a brand asset for
+                light artwork. Preserve the aspect ratio and give linked marks an accessible name.
+              </p>
+              <p class="source">
+                <a href="../../src/app/core/config/brand.ts">Brand configuration</a> ·
+                <a href="../../src/app/styles/_logo-system.scss">Logo system</a>
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section" id="geometry" aria-labelledby="geo-title">
+          <header class="section-head">
+            <h2 id="geo-title">Geometry</h2>
+            <p>
+              Use a small set of spacing steps and match corner shape to the control’s job. These
+              are proposed defaults based on existing components.
+            </p>
+          </header>
+          <div class="subhead">
+            <h3>Corner radius</h3>
+            <span class="note">Measurements in px</span>
+          </div>
+          <div class="radius-grid">
+            <div>
+              <span style="--radius: 8px"></span><code>8</code>
+              <p>Compact control</p>
+            </div>
+            <div>
+              <span style="--radius: 12px"></span><code>12</code>
+              <p>Field or artwork</p>
+            </div>
+            <div>
+              <span style="--radius: 16px"></span><code>16</code>
+              <p>Card or popover</p>
+            </div>
+            <div>
+              <span style="--radius: 18px"></span><code>18</code>
+              <p>Workspace panel</p>
+            </div>
+            <div>
+              <span style="--radius: 999px"></span><code>999</code>
+              <p>CTA, badge, filter</p>
+            </div>
+            <div class="circle">
+              <span style="--radius: 50%"></span><code>50%</code>
+              <p>Icon or avatar</p>
+            </div>
+          </div>
+          <div class="pair-grid">
+            <article class="inset">
+              <h3>Spacing</h3>
+              <div class="space-grid" aria-label="Spacing scale in pixels">
+                <div style="--size: 4px"><span></span><code>4</code></div>
+                <div style="--size: 8px"><span></span><code>8</code></div>
+                <div style="--size: 12px"><span></span><code>12</code></div>
+                <div style="--size: 16px"><span></span><code>16</code></div>
+                <div style="--size: 24px"><span></span><code>24</code></div>
+                <div style="--size: 32px"><span></span><code>32</code></div>
+                <div style="--size: 48px"><span></span><code>48</code></div>
+              </div>
+              <p>
+                Use 8 for icon gaps, 12–16 for controls, 16–24 within cards, and 32–48 between
+                groups. Explore and producer profiles already use 32px wide and 16px compact
+                gutters.
+              </p>
+            </article>
+            <article class="inset">
+              <h3>Surfaces &amp; motion</h3>
+              <div class="depth-demo" aria-hidden="true">
+                <span>Canvas</span><span>Panel</span><span>Overlay</span>
+              </div>
+              <p>
+                Start with a 1px tonal border and stepped backgrounds. Reserve shadow for floating
+                surfaces. Use about 150–200ms for control feedback and remove nonessential motion
+                when reduced motion is requested.
+              </p>
+            </article>
+          </div>
+          <p class="source">
+            <a href="../../src/app/components/spec-card/spec-card.scss">Artwork geometry</a> ·
+            <a href="../../src/app/pages/studio/ui/_studio-ui.scss">Studio components</a> ·
+            <a href="../../src/app/pages/search/search.component.scss">Explore layout</a>
+          </p>
+        </section>
+        <section class="section" id="components" aria-labelledby="comp-title">
+          <header class="section-head">
+            <h2 id="comp-title">Components</h2>
+            <p>
+              Use these specimens as the target for new work. The examples demonstrate proposed
+              shapes, hierarchy, interaction, and states with sample data.
+            </p>
+          </header>
+          <div class="component-grid">
+            <article class="inset specimen">
+              <div>
+                <h3>Buttons</h3>
+                <p>
+                  Use one primary action per group, an outline for secondary, and text for tertiary.
+                  Name destructive actions explicitly.
+                </p>
+              </div>
+              <div class="actions">
+                <button type="button" class="button primary" id="open-dialog">
+                  <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i> Choose a license</button
+                ><button type="button" class="button secondary" data-example="Saved to favorites">
+                  Save</button
+                ><button type="button" class="button quiet" data-example="Preview selected">
+                  Preview
+                </button>
+              </div>
+              <div class="actions">
+                <button type="button" class="button primary" disabled>Disabled</button
+                ><button
+                  type="button"
+                  class="button secondary static-focus"
+                  data-example="Focus style example"
+                >
+                  Focus</button
+                ><button
+                  type="button"
+                  class="button destructive"
+                  data-example="Removal would ask for confirmation"
+                >
+                  Remove
+                </button>
+              </div>
+              <p class="note">40px desktop pill · 44px on touch surfaces</p>
+            </article>
+            <article class="inset specimen">
+              <div>
+                <h3>Fields &amp; filters</h3>
+                <p>
+                  Label inputs above. Put the hint or error below the field. Show filter selection
+                  with a check and a distinct surface.
+                </p>
+              </div>
+              <div class="field-grid">
+                <div class="field">
+                  <label for="find-demo">Search beats</label>
+                  <div class="search-field">
+                    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i
+                    ><input type="search" id="find-demo" placeholder="Search by title" />
+                  </div>
+                </div>
+                <div class="field error-field">
+                  <label for="bpm-demo">Tempo</label
+                  ><input
+                    id="bpm-demo"
+                    value="240"
+                    readonly
+                    aria-invalid="true"
+                    aria-describedby="bpm-error"
+                  /><small id="bpm-error">Enter 60 to 200 BPM.</small>
+                </div>
+              </div>
+              <div class="actions">
+                <button type="button" class="chip" aria-pressed="true">
+                  <i class="fa-solid fa-check" aria-hidden="true"></i> Trap</button
+                ><button type="button" class="chip" aria-pressed="false">
+                  <i class="fa-solid fa-check" aria-hidden="true"></i> Lo-fi</button
+                ><button type="button" class="chip" aria-pressed="false">
+                  <i class="fa-solid fa-check" aria-hidden="true"></i> Drill
+                </button>
+              </div>
+            </article>
+            <article class="inset specimen featured">
+              <div>
+                <h3>Beat card, result row &amp; player</h3>
+                <p>
+                  Keep artwork square, titles and producers easy to scan, and BPM and key in mono.
+                  Separate play from the detail link. Keep price and sale presentation consistent.
+                </p>
+              </div>
+              <div class="beat-layout">
+                <div class="beat-card">
+                  <div class="beat-image">
+                    <img
+                      src="../../public/assets/images/genres/trap.webp"
+                      alt=""
+                      width="260"
+                      height="260"
+                    /><span class="badge sale">−25%</span
+                    ><button
+                      type="button"
+                      class="round-button primary"
+                      data-play
+                      aria-label="Play After Hours"
+                      aria-pressed="false"
+                    >
+                      <i class="fa-solid fa-play" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                  <strong class="track-title">After Hours</strong
+                  ><span class="track-sub">Northside</span>
+                  <div class="card-bottom">
+                    <code>94 BPM · F MIN</code><span class="price"><del>$39.00</del> $29.25</span>
+                  </div>
+                </div>
+                <div class="beat-side">
+                  <div class="beat-row">
+                    <img
+                      src="../../public/assets/images/genres/trap.webp"
+                      alt=""
+                      width="44"
+                      height="44"
+                    />
+                    <div><strong>After Hours</strong><span class="track-sub">Northside</span></div>
+                    <code>94 BPM</code><strong class="price">$29.25</strong>
+                  </div>
+                  <div class="player-demo">
+                    <button
+                      type="button"
+                      id="play-demo"
+                      class="round-button primary"
+                      data-play
+                      aria-label="Play After Hours"
+                      aria-pressed="false"
+                    >
+                      <i class="fa-solid fa-play" aria-hidden="true"></i>
+                    </button>
+                    <div><strong>After Hours</strong><span class="track-sub">Northside</span></div>
+                    <div class="transport">
+                      <input
+                        type="range"
+                        min="0"
+                        max="92"
+                        value="28"
+                        aria-label="Preview position in seconds"
+                      /><code id="elapsed">0:28 / 1:32</code>
+                    </div>
+                  </div>
+                  <p class="note">The play and pause controls demonstrate synchronized UI.</p>
+                </div>
+              </div>
+              <p class="source">
+                <a href="../../src/app/components/spec-card/spec-card.html">Beat card</a> ·
+                <a href="../../src/app/components/spec-list-item/spec-list-item.component.html"
+                  >List item</a
+                >
+                ·
+                <a href="../../src/app/shared/components/offer-price/offer-price.component.ts"
+                  >Offer price</a
+                >
+              </p>
+            </article>
+            <article class="inset specimen">
+              <div>
+                <h3>Feedback &amp; empty states</h3>
+                <p>
+                  Give loading, no results, and errors distinct copy. Offer a next action when the
+                  user can resolve the issue.
+                </p>
+              </div>
+              <div class="state-examples">
+                <div class="state">
+                  <i class="fa-solid fa-circle-notch" aria-hidden="true"></i>
+                  <div>
+                    <strong>Loading beats…</strong><small>Reserve space for the results.</small>
+                  </div>
+                </div>
+                <div class="state">
+                  <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                  <div>
+                    <strong>No beats match</strong
+                    ><small>Try another search or clear filters.</small>
+                  </div>
+                </div>
+                <div class="state">
+                  <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+                  <div>
+                    <strong>Couldn’t load beats</strong><small>Try again in a moment.</small>
+                  </div>
+                  <button type="button" class="button secondary" data-example="Retry example">
+                    Retry
+                  </button>
+                </div>
+                <div class="toast-example">
+                  <i class="fa-solid fa-check" aria-hidden="true"></i> License added to cart
+                </div>
+              </div>
+            </article>
+            <article class="inset specimen">
+              <div>
+                <h3>Pagination &amp; data rows</h3>
+                <p>
+                  Keep column labels stable, align numbers, and give the current page a visible and
+                  programmatic state.
+                </p>
+              </div>
+              <div class="table-scroll specimen-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th scope="col">Track</th>
+                      <th scope="col">Status</th>
+                      <th scope="col" class="number">Plays</th>
+                    </tr>
+                  </thead>
+                  <tbody id="track-rows">
+                    <tr>
+                      <th scope="row">After Hours</th>
+                      <td><span class="badge success">Published</span></td>
+                      <td class="number">1,284</td>
+                    </tr>
+                    <tr>
+                      <th scope="row">In Motion</th>
+                      <td><span class="badge neutral">Draft</span></td>
+                      <td class="number">0</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <nav class="pager" aria-label="Example pagination">
+                <button type="button" aria-label="Previous page" data-page-step="-1" disabled>
+                  <i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button
+                ><button type="button" data-page="1" aria-current="page" aria-label="Page 1">
+                  1</button
+                ><button type="button" data-page="2" aria-label="Page 2">2</button
+                ><button type="button" data-page="3" aria-label="Page 3">3</button
+                ><button type="button" aria-label="Next page" data-page-step="1">
+                  <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                </button>
+              </nav>
+              <p class="source">
+                <a href="../../src/app/shared/components/pagination/pagination.component.html"
+                  >Shared pagination</a
+                >
+              </p>
+            </article>
+            <article class="inset specimen featured">
+              <div>
+                <h3>Dialogs &amp; sheets</h3>
+                <p>
+                  Move focus inside, support Escape, and restore focus on close. Use a simple
+                  confirmation for routine decisions and a larger sheet for structured selection.
+                  Keep actions above the mobile safe area.
+                </p>
+              </div>
+              <div class="dialog-preview">
+                <div>
+                  <span class="eyebrow">License sheet</span>
+                  <h4>Choose a license</h4>
+                  <span class="track-sub">After Hours · Northside</span>
+                </div>
+                <div class="license-sample selected">
+                  <span><strong>Basic MP3</strong><small>MP3 download</small></span
+                  ><strong>$29.25</strong>
+                </div>
+                <div class="license-sample">
+                  <span><strong>Premium WAV</strong><small>MP3 and WAV download</small></span
+                  ><strong>$59.00</strong>
+                </div>
+                <button type="button" class="button primary" data-open-dialog>
+                  Try the dialog
+                </button>
+              </div>
+              <p class="source">
+                <a href="../../src/app/components/purchase-warp/purchase-warp.html">Purchase UI</a>
+                ·
+                <a href="../../src/app/components/warp-dialog/warp-dialog.html"
+                  >Warp dialog shell</a
+                >
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section" id="patterns" aria-labelledby="patterns-title">
+          <header class="section-head">
+            <h2 id="patterns-title">Screen patterns</h2>
+            <p>
+              Start from the layout that matches the feature. Keep titles, navigation, actions, and
+              feedback in predictable positions.
+            </p>
+          </header>
+          <div class="pattern-grid">
+            <article class="pattern">
+              <div class="wire marketplace" aria-hidden="true">
+                <b></b><i></i>
+                <div><b></b><b></b><b></b></div>
+                <footer></footer>
+              </div>
+              <div class="pattern-body">
+                <h3>Marketplace</h3>
+                <p>
+                  Title, then filter and sort above results. Preserve space for the persistent
+                  player and keep play and purchase available in grid and list.
+                </p>
+                <a href="../../src/app/pages/search/search.component.html">Explore template</a>
+              </div>
+            </article>
+            <article class="pattern">
+              <div class="wire workbench" aria-hidden="true">
+                <i></i>
+                <div><b></b><b></b><b></b></div>
+                <footer></footer>
+              </div>
+              <div class="pattern-body">
+                <h3>Studio</h3>
+                <p>
+                  Use Studio navigation, a page title, and a clear page action. Start with
+                  <code>su-page-head</code>, <code>su-panel</code>, and <code>su-stat</code>.
+                </p>
+                <a href="../../src/app/pages/studio/ui/index.ts">Studio primitives</a>
+              </div>
+            </article>
+            <article class="pattern">
+              <div class="wire split-wire" aria-hidden="true">
+                <b></b>
+                <div>
+                  <i></i><b></b><b></b>
+                  <footer></footer>
+                </div>
+              </div>
+              <div class="pattern-body">
+                <h3>Account access</h3>
+                <p>
+                  Split artwork and form on wide screens. Use a focused form stack on mobile, with
+                  visible labels and local errors.
+                </p>
+                <a href="../../src/app/pages/auth/auth.component.html">Auth shell</a>
+              </div>
+            </article>
+            <article class="pattern">
+              <div class="wire checkout-wire" aria-hidden="true">
+                <i></i>
+                <div><b></b><b></b><b></b></div>
+                <footer></footer>
+              </div>
+              <div class="pattern-body">
+                <h3>Checkout</h3>
+                <p>
+                  Keep item, license, currency, and total consistent through cart and receipt. Stack
+                  the summary on narrow screens.
+                </p>
+                <a href="../../src/app/components/cart/cart.component.html">Cart layout</a> ·
+                <a href="../../src/app/pages/payment-result/payment-result.component.html"
+                  >Receipt</a
+                >
+              </div>
+            </article>
+            <article class="pattern">
+              <div class="wire admin-wire" aria-hidden="true">
+                <i></i>
+                <div><b></b><b></b><b></b></div>
+                <footer></footer>
+              </div>
+              <div class="pattern-body">
+                <h3>Admin</h3>
+                <p>
+                  Use the console’s cool palette, compact table controls, badges, and section
+                  navigation. Keep keyboard behavior consistent.
+                </p>
+                <a href="../../src/app/pages/admin/admin.component.html">Admin shell</a>
+              </div>
+            </article>
+            <article class="pattern">
+              <div class="wire editor-wire" aria-hidden="true">
+                <i></i><b></b>
+                <div><b></b><b></b><b></b></div>
+                <footer></footer>
+              </div>
+              <div class="pattern-body">
+                <h3>Creator Tools</h3>
+                <p>
+                  Keep preview, settings, transport, and export distinct. Confine editing-channel
+                  colors to the tool and preview.
+                </p>
+                <a href="../../src/app/pages/creator-tools/creator-tools.component.html"
+                  >Editor layout</a
+                >
+              </div>
+            </article>
+          </div>
+          <div class="inset breakpoint-note">
+            <h3>Responsive behavior</h3>
+            <p>
+              Browse’s desktop sidebar starts at <strong>1181px</strong>. Shell mobile navigation
+              appears at <strong>1024px and below</strong>. Explore changes at
+              <strong>900px</strong> and Studio’s drawer at <strong>760px</strong>. Check each
+              transition and inspect docked and expanded player layouts.
+            </p>
+            <p class="source">
+              <a href="../../src/app/app.scss">Shell breakpoints</a> ·
+              <a href="../../src/app/pages/studio/studio.component.scss">Studio breakpoints</a>
+            </p>
+          </div>
+        </section>
+
+        <section class="section" id="audit" aria-labelledby="audit-title">
+          <header class="section-head">
+            <h2 id="audit-title">UI consistency audit</h2>
+            <p>
+              Use the findings as a migration backlog. Each points to the current implementation and
+              a proposed fix.
+            </p>
+          </header>
+          <div class="audit-comparison inset">
+            <h3>Four treatments for primary actions</h3>
+            <p>
+              These specimens illustrate current differences in corner shape, foreground color and
+              control height.
+            </p>
+            <div class="comparison-grid" aria-label="Current primary button styles">
+              <div>
+                <span class="comparison-button old-global">Continue</span
+                ><small>Global button</small>
+              </div>
+              <div>
+                <span class="comparison-button old-studio">Upload beat</span
+                ><small>Studio page action</small>
+              </div>
+              <div>
+                <span class="comparison-button old-coupon">New coupon</span
+                ><small>Promotions control</small>
+              </div>
+              <div>
+                <span class="comparison-button old-cart">Checkout</span><small>Cart checkout</small>
+              </div>
+            </div>
+            <p class="source">
+              <a href="../../src/app/styles/_buttons.scss">Global</a> ·
+              <a href="../../src/app/pages/studio/ui/_studio-ui.scss">Studio</a> ·
+              <a href="../../src/app/pages/studio/tabs/studio-promotions.component.css"
+                >Promotions</a
+              >
+              ·
+              <a href="../../src/app/components/cart/cart-summary/cart-summary.component.scss"
+                >Cart</a
+              >
+            </p>
+          </div>
+          <div class="audit-top">
+            <div class="filter-row" role="group" aria-label="Filter by audit priority">
+              <button type="button" data-filter="all" aria-pressed="true">All findings</button
+              ><button type="button" data-filter="high" aria-pressed="false">High priority</button
+              ><button type="button" data-filter="medium" aria-pressed="false">Medium</button
+              ><button type="button" data-filter="low" aria-pressed="false">Low</button>
+            </div>
+            <span id="finding-count" class="note" role="status"></span>
+          </div>
+          <div id="findings"></div>
+          <p class="source audit-resolved">
+            <strong>Resolved.</strong> Removed theme switching and its alternate palettes. Settings
+            → Appearance now shows a read-only preview.
+            <a href="../../src/app/styles/_theme.scss">Dark palette</a> ·
+            <a
+              href="../../src/app/components/settings/appearance-settings/appearance-settings.component.html"
+              >Appearance preview</a
+            >
+          </p>
+          <details class="disclosure">
+            <summary>Audit coverage and limits</summary>
+            <div id="coverage"></div>
+          </details>
+          <div class="inset final-check">
+            <h3>Before adding a component</h3>
+            <ul>
+              <li>Start with the closest shared component or screen pattern.</li>
+              <li>Check theme colors, keyboard focus, and icon labels.</li>
+              <li>
+                Review loading, empty, error, disabled, selected, and success states that apply.
+              </li>
+              <li>
+                Review narrow and wide layouts with relevant navigation and overlays in place.
+              </li>
+              <li>Update this guide when an agreed pattern or token changes.</li>
+            </ul>
+          </div>
+        </section>
+        <noscript
+          ><p>
+            Enable JavaScript for the token tables, icon gallery, and interactive audit.
+          </p></noscript
+        >
+      </div>
+    </main>
+
+    <footer class="page-footer">
+      <div class="wrap"><span>Waveyard · UI design system</span><a href="#top">Back to top</a></div>
+    </footer>
+    <dialog
+      id="license-dialog"
+      aria-labelledby="license-title"
+      aria-describedby="license-description"
+    >
+      <form method="dialog">
+        <h2 id="license-title">Choose a license</h2>
+        <p id="license-description">After Hours · Northside</p>
+        <label class="license-sample"
+          ><input type="radio" name="license" value="basic" checked autofocus /><span
+            ><strong>Basic MP3</strong><small>MP3 download</small></span
+          ><strong>$29.25</strong></label
+        >
+        <label class="license-sample"
+          ><input type="radio" name="license" value="premium" /><span
+            ><strong>Premium WAV</strong><small>MP3 and WAV download</small></span
+          ><strong>$59.00</strong></label
+        >
+        <div class="actions dialog-actions">
+          <button class="button secondary" value="cancel">Cancel</button
+          ><button class="button primary" value="confirm">Add to cart</button>
+        </div>
+      </form>
+    </dialog>
+    <div class="demo-toast" id="demo-toast" role="status" aria-live="polite"></div>
+  </body>
+</html>

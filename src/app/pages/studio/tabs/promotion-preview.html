@@ -1,0 +1,42 @@
+@if (!w.busy() && !w.loadFailed() && !w.conflict()) {
+  <section aria-label="Eligible beats and licenses">
+    <div class="pw-preview-heading">
+      <span>Beat and qualifying licenses</span>
+      <span class="pw-meta"
+        >{{ w.preview().length }} {{ w.preview().length === 1 ? 'beat' : 'beats' }}</span
+      >
+    </div>
+    <ul class="pw-beats">
+      @for (entry of w.preview(); track entry.beat_id) {
+        @let beat = w.previewByBeat().get(entry.beat_id);
+        <li class="pw-preview-row">
+          <div class="pw-identity">
+            <span class="pw-artwork">
+              @if (beat?.imageUrl) {
+                <img [src]="beat?.imageUrl" alt="" width="44" height="44" loading="lazy" />
+              } @else {
+                <i class="fa-solid fa-music" aria-hidden="true"></i>
+              }
+            </span>
+            <strong>{{ beat?.title ?? 'Unavailable beat' }}</strong>
+          </div>
+          <ul class="pw-license-tags">
+            @for (option of entry.option_ids; track option) {
+              <li>{{ w.licenseName(beat, option) }}</li>
+            }
+          </ul>
+        </li>
+      } @empty {
+        <li class="pw-empty">
+          <h3>No enrolled beats</h3>
+          <p>Enroll beats to see which licenses qualify.</p>
+        </li>
+      }
+    </ul>
+  </section>
+}
+@if (w.loadFailed() && !w.conflict()) {
+  <button type="button" class="pw-button" (click)="w.retryPreview()" [disabled]="w.busy()">
+    Retry preview
+  </button>
+}

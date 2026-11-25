@@ -1,0 +1,39 @@
+@mixin slim {
+  --scrollbar-thumb: color-mix(in srgb, var(--ink) 36%, var(--cream));
+  --scrollbar-thumb-hover: color-mix(in srgb, var(--ink) 56%, var(--cream));
+
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+  scrollbar-gutter: stable;
+
+  // Chromium and Safari can render a rounded thumb with clearance on both sides.
+  @supports selector(::-webkit-scrollbar-thumb) {
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+
+    &::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      border: 2px solid transparent;
+      border-radius: 999px;
+      background: var(--scrollbar-thumb) padding-box;
+
+      &:hover,
+      &:active {
+        background-color: var(--scrollbar-thumb-hover);
+      }
+    }
+  }
+
+  @media (forced-colors: active) {
+    --scrollbar-thumb: ButtonText;
+    --scrollbar-thumb-hover: Highlight;
+    scrollbar-color: auto;
+  }
+}

@@ -38,6 +38,7 @@ describe('StudioComponent', () => {
       'overview',
       'analytics',
       'tracks',
+      'promotions',
       'orders',
       'purchases',
       'profile',

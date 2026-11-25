@@ -9,6 +9,7 @@ import {
   PlayerService,
   ToastService,
 } from '../../services';
+import { SpecActionService } from '../../services/spec-action.service';
 import { SpecDetailsComponent } from './spec-details.component';
 
 describe('SpecDetailsComponent', () => {
@@ -72,6 +73,7 @@ describe('SpecDetailsComponent', () => {
   const cartServiceMock = {
     addItem: vi.fn(),
   };
+  const specActions = { addToCart: vi.fn() };
   const playerServiceMock = {
     showPlayer: vi.fn(),
   };
@@ -92,6 +94,7 @@ describe('SpecDetailsComponent', () => {
         { provide: LabService, useValue: labServiceMock },
         { provide: PlayerService, useValue: playerServiceMock },
         { provide: CartService, useValue: cartServiceMock },
+        { provide: SpecActionService, useValue: specActions },
         { provide: ToastService, useValue: toastServiceMock },
         { provide: AnalyticsService, useValue: analyticsServiceMock },
       ],
@@ -219,6 +222,23 @@ describe('SpecDetailsComponent', () => {
     component.selectLicense(mockSpec.licenses[0]);
 
     expect(component.selectedLicense()?.id).toBe('l2');
+  });
+
+  it('shows the discounted tier and opens Buy now with that license', () => {
+    const discount = {
+      currency: 'USD',
+      original_minor: 7900,
+      discount_minor: 1975,
+      payable_minor: 5925,
+      percent_bps: 2500,
+    };
+    component.selectLicense({ ...mockSpec.licenses[0], discount });
+    fixture.detectChanges();
+    const buy = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.lr-buy');
+    expect(buy?.textContent).toContain('Buy now');
+    expect(fixture.nativeElement.querySelector('.lr-foot').textContent).toContain('$59.25');
+    buy?.click();
+    expect(specActions.addToCart).toHaveBeenCalledWith(expect.any(MouseEvent), mockSpec, 'l2');
   });
 
   it('should toggle related beat view mode', () => {

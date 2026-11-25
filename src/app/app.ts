@@ -2,8 +2,7 @@ import { AuthService } from './services/auth.service';
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { Title } from '@angular/platform-browser';
-import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { filter } from 'rxjs/operators';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { HeaderComponent } from './components';
 import { FooterComponent } from './components/footer/footer';
 import { LoadingBarComponent } from './components/loading-bar/loading-bar.component';
@@ -13,9 +12,9 @@ import { PurchaseWarpComponent } from './components/purchase-warp/purchase-warp'
 import { ToastComponent } from './components/toast/toast.component';
 import { BRAND } from './core/config/brand';
 import { BuyerCurrencyService } from './services/buyer-currency.service';
+import { PageNavigationService } from './services/page-navigation.service';
 import { PlayerService } from './services/player.service';
 import { SpecUploadMonitorService } from './services/spec-upload-monitor.service';
-import { ThemeService } from './services/theme.service';
 import { usesSidebarLayout } from './utils/sidebar-routes';
 import { SidebarComponent } from './components/sidebar/sidebar';
 
@@ -44,21 +43,15 @@ export class AppComponent {
   readonly auth = inject(AuthService);
   readonly brand = BRAND;
   private router = inject(Router);
-  // Dark-only: creating the service keeps the dark class on the page.
-  private theme = inject(ThemeService);
   private specUploadMonitor = inject(SpecUploadMonitorService);
   private buyerCurrency = inject(BuyerCurrencyService);
   playerService = inject(PlayerService);
 
   constructor() {
     inject(Title).setTitle(BRAND.name);
+    inject(PageNavigationService);
     this.specUploadMonitor.resumePersisted();
     this.buyerCurrency.load().subscribe();
-    this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => {
-      setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: 'auto' });
-      }, 0);
-    });
   }
 
   hasSidebar(): boolean {

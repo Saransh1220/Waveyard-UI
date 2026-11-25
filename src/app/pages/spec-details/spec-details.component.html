@@ -1,16 +1,18 @@
 <div class="beat-page" *ngIf="spec() as s; else pendingOrNotFound">
   <section class="beat-main">
-    <div class="beat-navigation">
-      <button class="beat-back" type="button" (click)="goBack()">
-        <i class="fas fa-arrow-left" aria-hidden="true"></i>
-        Back
-      </button>
-    </div>
     <div class="bm-inner">
       <aside class="bs-card" aria-label="Beat details">
+        <app-back-button />
         <div class="bc-head">
           <div class="bc-art">
             <img [src]="s.imageUrl" [alt]="s.title" />
+            @if (s.promotion; as sale) {
+              <app-sale-badge
+                class="bc-art-sale"
+                [discount]="sale.discount"
+                [selectLicenses]="sale.select_licenses"
+              />
+            }
           </div>
           <div class="bc-id">
             <div class="hero-eyebrow">
@@ -25,6 +27,9 @@
               prod.
               <a [routerLink]="producerRoute(s)">{{ s.producerName }}</a>
             </div>
+            @if (s.promotion) {
+              <app-beat-price class="bc-sale" [spec]="s" [showBadge]="false" />
+            }
           </div>
         </div>
 
@@ -84,8 +89,7 @@
 
         <div class="hero-tags" *ngIf="displayTags().length">
           <ng-container *ngFor="let tag of displayTags(); let last = last">
-            <span class="t">{{ tag }}</span
-            ><span class="sep" *ngIf="!last">·</span>
+            <span class="t">{{ tag }}</span><span class="sep" *ngIf="!last">·</span>
           </ng-container>
         </div>
 
@@ -187,9 +191,18 @@
             </span>
             <span class="lr-radio" aria-hidden="true"></span>
             <span class="lr-name">{{ license.name }}</span>
-            <span class="lr-price">{{
-              license.displayPriceMoney | money: license.price : license.selectedPrice
-            }}</span>
+            <span class="lr-price">
+              <app-offer-price
+                [base]="license.displayPriceMoney"
+                [fallback]="license.price"
+                [offer]="license.selectedPrice"
+                [discount]="license.discount"
+                [showBadge]="false"
+              />
+              @if (license.discount; as deal) {
+                <app-sale-badge [discount]="deal" />
+              }
+            </span>
             <span class="lr-meta">
               <em>{{ getLicenseFormatLabel(license) }}</em>
               <span class="lr-for">{{ getLicenseSubtitle(license, i) }}</span>
@@ -209,15 +222,26 @@
             <span class="lr-sel-name">{{ chosen.name }}</span>
           </div>
           <div class="lr-sel">
-            <span class="lr-sel-label">Total</span>
-            <span class="lr-sel-name">{{
-              chosen.displayPriceMoney | money: chosen.price : chosen.selectedPrice
-            }}</span>
+            <span class="lr-sel-label">{{ chosen.discount ? 'Buy now price' : 'Total' }}</span>
+            <app-offer-price
+              class="lr-sel-name"
+              [base]="chosen.displayPriceMoney"
+              [fallback]="chosen.price"
+              [offer]="chosen.selectedPrice"
+              [discount]="chosen.discount"
+              [showBadge]="false"
+            />
           </div>
-          <button class="lr-buy" type="button" (click)="addLicenseToCart(chosen)">
-            <i class="fas fa-cart-shopping" aria-hidden="true"></i>
-            {{ getLicenseButtonLabel(chosen) }}
-          </button>
+          @if (chosen.discount) {
+            <button class="lr-buy" type="button" (click)="openDiscountCheckout($event, chosen)">
+              <i class="fas fa-cart-shopping" aria-hidden="true"></i> Buy now
+            </button>
+          } @else {
+            <button class="lr-buy" type="button" (click)="addLicenseToCart(chosen)">
+              <i class="fas fa-cart-shopping" aria-hidden="true"></i>
+              {{ getLicenseButtonLabel(chosen) }}
+            </button>
+          }
         </div>
 
         <p class="lic-note">

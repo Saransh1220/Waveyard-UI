@@ -6,10 +6,13 @@ import type { Spec } from '../models';
 @Injectable({ providedIn: 'root' })
 export class PurchaseDialogService {
   private readonly current = signal<Spec | null>(null);
+  private readonly initialOption = signal<string | undefined>(undefined);
 
   readonly spec = this.current.asReadonly();
+  readonly preferredLicenseId = this.initialOption.asReadonly();
 
-  open(spec: Spec): void {
+  open(spec: Spec, optionId?: string): void {
+    this.initialOption.set(optionId);
     this.current.set(spec);
   }
 

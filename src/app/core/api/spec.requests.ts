@@ -1,5 +1,11 @@
 import { HttpParams } from '@angular/common/http';
-import type { Money, SelectedPriceOffer, StoredPrice } from '../../models/money';
+import type {
+  CheckoutDiscount,
+  Money,
+  SelectedPriceOffer,
+  SpecPromotion,
+  StoredPrice,
+} from '../../models/money';
 import { ApiRequest, HttpMethod } from './api-request';
 
 export interface PublicAnalyticsDto {
@@ -39,6 +45,7 @@ export interface SpecDto {
   price_money?: Money;
   display_price_money?: Money;
   selected_price?: SelectedPriceOffer;
+  promotion?: SpecPromotion;
   duration?: number;
   free_mp3_enabled?: boolean;
   created_at: string;
@@ -108,6 +115,7 @@ export interface LicenseDto {
   price_money?: Money;
   display_price_money?: Money;
   selected_price?: SelectedPriceOffer;
+  discount?: CheckoutDiscount;
   prices?: StoredPrice[];
   features: string[];
   file_types: string[];
@@ -198,15 +206,25 @@ export interface UpdateSpecDto {
   tags?: string[];
 }
 
+export interface ProducerSpecFilter {
+  category?: 'beat';
+  search?: string;
+  ids?: readonly string[];
+}
+
 export class GetUserSpecsRequest implements ApiRequest<PaginatedResponse<SpecDto>> {
   readonly method: HttpMethod = 'GET';
   readonly path: string;
   readonly params: HttpParams;
   readonly _responseType?: PaginatedResponse<SpecDto>;
 
-  constructor(userId: string, page: number = 1, limit: number = 20) {
+  constructor(userId: string, page: number = 1, limit: number = 20, filter?: ProducerSpecFilter) {
     this.path = `/users/${userId}/specs`;
-    this.params = new HttpParams().set('page', page).set('limit', limit);
+    let params = new HttpParams().set('page', page).set('limit', limit);
+    if (filter?.category) params = params.set('category', filter.category);
+    if (filter?.search) params = params.set('search', filter.search);
+    if (filter?.ids?.length) params = params.set('ids', filter.ids.join(','));
+    this.params = params;
   }
 }
 

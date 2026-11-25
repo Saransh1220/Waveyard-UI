@@ -9,25 +9,14 @@
   --su-line: color-mix(in srgb, var(--ink) 14%, transparent);
   --su-line-2: color-mix(in srgb, var(--ink) 26%, transparent);
   --su-soft: color-mix(in srgb, var(--ink) 5%, transparent);
-  // Panels are true surfaces so they stand off the cream page behind them
-  --su-panel: #ffffff;
-  // Inverted anchor surface (used by su-panel tone="dark")
-  --su-dark-panel: #141310;
+  --su-panel: #1b1814;
+  // A tinted surface makes the anchor panel stand out from the workspace.
+  --su-dark-panel: color-mix(in srgb, var(--hot) 8%, #15120f);
   --su-muted: var(--ink-mute);
   --su-radius: 18px;
 
-  --su-up: #1a7a45;
-  --su-down: #c01e3a;
-}
-
-@mixin dark-tokens {
-  :host-context(body.dark-theme) {
-    --su-panel: #1b1814;
-    // in the dark theme the anchor panel is a warm, pink-tinted surface so it still stands out
-    --su-dark-panel: color-mix(in srgb, var(--hot) 8%, #15120f);
-    --su-up: #5fd18f;
-    --su-down: #ff7088;
-  }
+  --su-up: #5fd18f;
+  --su-down: #ff7088;
 }
 
 // Micro label: small, mono, spaced capitals

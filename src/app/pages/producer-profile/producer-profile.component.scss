@@ -13,6 +13,7 @@
   --gutter: 32px;
   --lift: cubic-bezier(0.2, 0.8, 0.2, 1);
 
+  position: relative;
   min-height: 100vh;
   padding-bottom: 96px;
   background: var(--cream);
@@ -25,6 +26,13 @@
 .catalog {
   width: min(1240px, calc(100% - var(--gutter) * 2));
   margin-inline: auto;
+}
+
+.profile-back {
+  position: absolute;
+  z-index: 1;
+  inset-block-start: 16px;
+  inset-inline-start: max(var(--gutter), (100% - 1240px) / 2);
 }
 
 /* ─── States ─────────────────────────────────────────── */

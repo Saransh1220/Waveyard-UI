@@ -31,6 +31,20 @@ export interface Money {
   currency: AppCurrency;
 }
 
+export interface CheckoutDiscount {
+  currency: AppCurrency;
+  original_minor: number;
+  discount_minor: number;
+  payable_minor: number;
+  percent_bps?: number;
+}
+
+export interface SpecPromotion {
+  discount: CheckoutDiscount;
+  starting_price: boolean;
+  select_licenses: boolean;
+}
+
 export interface CurrencyDefinition {
   code: string;
   symbol: string;

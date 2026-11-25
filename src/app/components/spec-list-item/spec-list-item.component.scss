@@ -204,6 +204,7 @@
 }
 
 .row-price {
+  --offer-justify: end;
   text-align: right;
   font-family: $font-head;
   font-weight: 700;
@@ -211,6 +212,12 @@
   font-size: 17px;
   color: var(--brand-color);
   white-space: nowrap;
+}
+
+.row-sale {
+  margin-block-start: 0.25rem;
+  --sale-bg: color-mix(in srgb, var(--hot, #ff4969) 13%, var(--ink, #f6efdc) 7%, transparent);
+  --sale-ink: var(--hot, #ff4969);
 }
 
 .action-btn,
@@ -642,6 +649,12 @@
       min-width: 0;
       gap: 8px;
       padding: 0 10px;
+    }
+
+    .row-price {
+      --offer-direction: column;
+      --offer-align: flex-end;
+      padding-block: 4px;
     }
   }
 }

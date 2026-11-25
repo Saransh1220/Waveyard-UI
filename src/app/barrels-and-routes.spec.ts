@@ -37,6 +37,7 @@ describe('Barrels and Routes', () => {
       '',
       'overview',
       'tracks',
+      'promotions',
       'analytics',
       'orders',
       'purchases',

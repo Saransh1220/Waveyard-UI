@@ -1,9 +1,10 @@
-import { CommonModule, DOCUMENT, Location } from '@angular/common';
+import { CommonModule, DOCUMENT } from '@angular/common';
 import { Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { combineLatest, of } from 'rxjs';
 import { catchError, finalize, startWith, switchMap } from 'rxjs/operators';
+import { BackButtonComponent } from '../../components/back-button/back-button.component';
 import { SpecCardComponent } from '../../components/spec-card/spec-card';
 import { BRAND } from '../../core/config/brand';
 import { type LicenseOption, type Spec } from '../../models';
@@ -16,28 +17,40 @@ import {
   ToastService,
 } from '../../services';
 import { FavoriteStateService } from '../../services/favorite-state.service';
-import { MoneyPipe } from '../../shared/pipes/money.pipe';
+import { SpecActionService } from '../../services/spec-action.service';
+import {
+  BeatPriceComponent,
+  OfferPriceComponent,
+  SaleBadgeComponent,
+} from '../../shared/components/offer-price/offer-price.component';
 import { isExclusiveLicense, licenseTiers, TIER_ICON, TIER_LABEL } from '../../utils/license-tiers';
 import { producerLink } from '../../utils/producer-link';
 
 @Component({
   selector: 'app-spec-details',
   standalone: true,
-  imports: [CommonModule, RouterLink, MoneyPipe, SpecCardComponent],
+  imports: [
+    CommonModule,
+    RouterLink,
+    BeatPriceComponent,
+    OfferPriceComponent,
+    SaleBadgeComponent,
+    SpecCardComponent,
+    BackButtonComponent,
+  ],
   templateUrl: './spec-details.component.html',
   styleUrls: ['./spec-details.component.scss'],
 })
 export class SpecDetailsComponent {
   readonly brand = BRAND;
   private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private location = inject(Location);
   private document = inject(DOCUMENT);
   private labService = inject(LabService);
   private playerService = inject(PlayerService);
   private cartService = inject(CartService);
   private toastService = inject(ToastService);
   private analyticsService = inject(AnalyticsService);
+  private specActions = inject(SpecActionService);
 
   readonly favorites = inject(FavoriteStateService);
   isFavoriting = signal(false);
@@ -375,21 +388,6 @@ export class SpecDetailsComponent {
     this.toastService.info(message);
   }
 
-  goBack(): void {
-    const navigation = this.router.lastSuccessfulNavigation();
-    if (
-      navigation?.previousNavigation &&
-      navigation.trigger === 'imperative' &&
-      !navigation.extras.replaceUrl &&
-      !navigation.extras.skipLocationChange
-    ) {
-      this.location.back();
-      return;
-    }
-
-    void this.router.navigateByUrl('/explore');
-  }
-
   playSpec() {
     const s = this.spec();
     if (s) {
@@ -438,6 +436,11 @@ export class SpecDetailsComponent {
     this.selectedLicense.set(license);
     this.cartService.addItem(this.spec()!, license);
     this.toastService.success(`Added ${this.spec()!.title} (${license.name}) to cart`);
+  }
+
+  openDiscountCheckout(event: MouseEvent, license: LicenseOption) {
+    const spec = this.spec();
+    if (spec) this.specActions.addToCart(event, spec, license.id);
   }
 
   addSelectedLicenseToCart() {

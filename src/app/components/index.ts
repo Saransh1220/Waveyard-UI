@@ -17,7 +17,6 @@ export * from './settings/appearance-settings/appearance-settings.component';
 export * from './spec-card/spec-card';
 export * from './spec-list-item/spec-list-item.component';
 export * from './spec-row/spec-row.component';
-export * from './theme-toggle/theme-toggle';
 export * from './ticker/ticker';
 export * from './toast/toast.component';
 export * from './ui/loading-spinner/loading-spinner.component';

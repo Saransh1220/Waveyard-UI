@@ -75,6 +75,13 @@
       (click)="$event.stopPropagation()"
       >prod. {{ spec.producerName }}</a
     >
+    @if (spec.promotion; as sale) {
+      <app-sale-badge
+        class="row-sale"
+        [discount]="sale.discount"
+        [selectLicenses]="sale.select_licenses"
+      />
+    }
   </div>
 
   @if (appearance === 'market') {
@@ -91,7 +98,7 @@
       {{ getGenreLabel() }} · <em>{{ spec.bpm }} BPM</em> · {{ spec.key }}
     </div>
     <div class="money-m row-bpm">
-      {{ spec.displayPriceMoney | money: spec.price : spec.selectedPrice }}
+      <app-beat-price [spec]="spec" [showBadge]="false" [showOriginal]="false" />
     </div>
     <div class="stat-m row-key">{{ spec.category }}</div>
     <div class="stat-m row-dur">
@@ -113,9 +120,7 @@
     }
 
     <button class="purchase-pill lr-act cart" (click)="addToCart($event)" title="Add to cart">
-      <span class="row-price">{{
-        spec.displayPriceMoney | money: spec.price : spec.selectedPrice
-      }}</span>
+      <app-beat-price class="row-price" [spec]="spec" [showBadge]="false" [showOriginal]="false" />
       <span class="purchase-icon"><i class="fas fa-cart-shopping"></i></span>
     </button>
   </div>

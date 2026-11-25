@@ -95,7 +95,13 @@
             }
           </span>
           <span class="plays">{{ formatPlays(spec) }}</span>
-          <span class="price">{{ startingPrice(spec) }}</span>
+          <span class="price">
+            @if (spec.promotion) {
+              <app-beat-price [spec]="spec" />
+            } @else {
+              {{ startingPrice(spec) }}
+            }
+          </span>
         </button>
       }
     </div>

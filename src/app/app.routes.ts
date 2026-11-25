@@ -146,6 +146,19 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'promotions',
+        canActivate: [
+          () =>
+            inject(AuthService).currentUser()?.role === Role.PRODUCER ||
+            inject(Router).createUrlTree(['/studio/purchases']),
+        ],
+        canDeactivate: [(page: { canLeave(): boolean | Promise<boolean> }) => page.canLeave()],
+        loadComponent: () =>
+          import('./pages/studio/tabs/studio-promotions.component').then(
+            (m) => m.StudioPromotionsComponent,
+          ),
+      },
+      {
         path: 'analytics',
         loadComponent: () =>
           import('./pages/studio/tabs/studio-analytics.component').then(

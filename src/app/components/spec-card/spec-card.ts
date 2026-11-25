@@ -16,12 +16,15 @@ import { BRAND } from '../../core/config/brand';
 
 import type { Spec } from '../../models';
 import { SpecActionService } from '../../services/spec-action.service';
-import { MoneyPipe } from '../../shared/pipes/money.pipe';
+import {
+  BeatPriceComponent,
+  SaleBadgeComponent,
+} from '../../shared/components/offer-price/offer-price.component';
 import { producerLink } from '../../utils/producer-link';
 
 @Component({
   selector: 'app-spec-card',
-  imports: [CommonModule, NgOptimizedImage, RouterLink, MoneyPipe],
+  imports: [CommonModule, NgOptimizedImage, RouterLink, BeatPriceComponent, SaleBadgeComponent],
   templateUrl: './spec-card.html',
   styleUrls: ['./spec-card.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
